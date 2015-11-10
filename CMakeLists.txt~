@@ -12,9 +12,10 @@ endif()
 set(OpenIGTLink_USE_FILE_DIR "/home/snr/Support/OpenIGTLink-build")
 find_package(OpenIGTLink REQUIRED)
 include(${OpenIGTLink_USE_FILE})
- 
+
 add_executable(ImageRegistrationMethodAffine MACOSX_BUNDLE ImageRegistrationMethodAffine.cxx)
-TARGET_LINK_LIBRARIES(Receiver OpenIGTLink)
+TARGET_LINK_LIBRARIES(ImageRegistrationMethodAffine OpenIGTLink)
+TARGET_LINK_LIBRARIES(ImageRegistrationMethodAffine Teem)
 if( "${ITK_VERSION_MAJOR}" LESS 4 )
   target_link_libraries(ImageRegistrationMethodAffine ITKReview ${ITK_LIBRARIES})
 else( "${ITK_VERSION_MAJOR}" LESS 4 )
