@@ -4,10 +4,10 @@ project(ImageRegistrationMethodAffine)
  
 find_package(ITK REQUIRED)
 include(${ITK_USE_FILE})
-if (ITKVtkGlue_LOADED)
+#if (ITKVtkGlue_LOADED)
   find_package(VTK REQUIRED)
   include(${VTK_USE_FILE})
-endif()
+#endif()
 
 set(OpenIGTLink_USE_FILE_DIR "/home/snr/Support/OpenIGTLink-build")
 find_package(OpenIGTLink REQUIRED)
