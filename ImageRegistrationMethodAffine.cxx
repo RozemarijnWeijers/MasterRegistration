@@ -16,10 +16,13 @@
 #include <itkMatrix.h>
 #include <itkNrrdImageIO.h>
 #include <itkExtractImageFilter.h>
+#include "itkVTKImageToImageFilter.h"
 
 #include <vtkNrrdReader.h>
 #include "vtkSmartPointer.h"
 #include "vtkImageData.h"
+#include "vtkMatrix4x4.h"
+#include "vtkImageReslice.h"
 
 #include "igtlOSUtil.h"
 #include "igtlMessageHeader.h"
@@ -189,8 +192,10 @@ class Volumes
 
   Volumes();
   int ITKtoIGTVolume();
+  int VTKtoITKVolume();
 
   VolumeType::Pointer volumeData;
+  vtkSmartPointer<vtkNrrdReader> readerVTK;
   igtl::ImageMessage::Pointer imgMsg;
 
   protected:
@@ -206,6 +211,7 @@ Volumes::Volumes()
 
   // Create imageMessage and ITKvolume for this volume
   volumeData  = VolumeType::New();
+  readerVTK = vtkSmartPointer<vtkNrrdReader>::New();
   imgMsg = igtl::ImageMessage::New();
 
 }
@@ -248,6 +254,13 @@ int Volumes::ITKtoIGTVolume()
   memcpy(this->imgMsg->GetScalarPointer(), volumeData->GetBufferPointer(), this->imgMsg->GetImageSize());
   // Pack (serialize) and send
   this->imgMsg->Pack();
+
+  return 1;
+
+}
+
+int VTKtoITKVolume()
+{
 
   return 1;
 
@@ -550,6 +563,24 @@ int RegistrationFunction(Images* fixedImagep, Images* movingImagep, Images* regi
 
 }
 
+
+int LoadVolumeVTK(char* filename, Volumes* volume)
+{
+
+  volume->readerVTK->SetFileName(filename);
+  volume->readerVTK->Update();
+
+  /*typedef itk::ImageToVTKImageFilter<VolumeType>  ConnectorType;
+  ConnectorType::Pointer connector = ConnectorType::New();
+  connector->SetInput(volume->volumeData);*/
+
+
+  std::cerr << "Volume Loaded" << std::endl;
+
+  return 1;
+
+}
+
 int LoadVolume(char* filename, Volumes* volume)
 {
 
@@ -557,20 +588,52 @@ int LoadVolume(char* filename, Volumes* volume)
   FileReaderType::Pointer reader = FileReaderType::New();
   reader->SetFileName(filename);
 
-  try
-    {
-    reader->Update();
-    volume->volumeData = reader->GetOutput();
-    }
-  catch (itk::ExceptionObject &ex)
-    {
-    std::cerr << ex << std::endl;
-    return 0;
-    }
   /*std::cerr << "Spacing Volume:" << volume->GetSpacing() << std::endl;
   std::cerr << "Requested Region Volume:" << volume->GetRequestedRegion() << std::endl;
   std::cerr << "Origin Volume:" << volume->GetOrigin() << std::endl;*/
-  std::cerr << "Volume Loaded" << std::endl;
+  std::cerr << "VTKVolume Loaded" << std::endl;
+
+  return 1;
+
+}
+
+int resliceImageVolumeVTK(vtkSmartPointer<vtkNrrdReader> readerVTK, int start[3], int size[2], Images* sliceImage)
+{
+
+  readerVTK->Update();
+  double spacing[3];
+  double origin[3];
+
+  static double sagittalElements[16] = {
+            0, 0,-1, 0,
+            1, 0, 0, 0,
+            0,-1, 0, 0,
+            0, 0, 0, 1 };
+
+  readerVTK->GetOutput()->GetSpacing(spacing);
+  readerVTK->GetOutput()->GetOrigin(origin);
+
+  double center[3];
+  center[0] = origin[0] + spacing[0] * 0.5;// * (extent[0] + extent[1]);
+  center[1] = origin[1] + spacing[1] * 0.5;// * (extent[2] + extent[3]);
+  center[2] = origin[2] + spacing[2] * 0.5;// * (extent[4] + extent[5]);
+
+  vtkSmartPointer<vtkMatrix4x4> resliceAxes = vtkSmartPointer<vtkMatrix4x4>::New();
+  resliceAxes->DeepCopy(sagittalElements);
+  // Set the point through which to slice
+  resliceAxes->SetElement(0, 3, center[0]);
+  resliceAxes->SetElement(1, 3, center[1]);
+  resliceAxes->SetElement(2, 3, center[2]);
+
+  // Extract a slice in the desired orientation
+  vtkSmartPointer<vtkImageReslice> reslice = vtkSmartPointer<vtkImageReslice>::New();
+  reslice->SetInputConnection(readerVTK->GetOutputPort());
+  reslice->SetOutputDimensionality(2);
+  reslice->SetResliceAxes(resliceAxes);
+  reslice->SetInterpolationModeToLinear();
+  reslice->Update();
+  vtkSmartPointer<vtkImageData> slice = vtkSmartPointer<vtkImageData>::New();
+  slice= reslice->GetOutput();
 
   return 1;
 
@@ -578,7 +641,6 @@ int LoadVolume(char* filename, Volumes* volume)
 
 int resliceImageVolume(Volumes* volume, int start[3], int size[2], Images* sliceImage)
 {
-
 
   VolumeType::IndexType desiredStart;
   desiredStart[0]=start[0]; desiredStart[1]=start[1]; desiredStart[2]=start[2];
@@ -626,6 +688,7 @@ int resliceImageVolume(Volumes* volume, int start[3], int size[2], Images* slice
   sliceImage->imageData->SetSpacing(spacingsliceImage);
   sliceImage->imageData->SetOrigin(originsliceImage);
   sliceImage->imgMsg->SetOrigin(originsliceImage);
+
   sliceImage->imgMsg->SetSpacing(spacingsliceImage);
 
 }
@@ -650,6 +713,10 @@ int main(int argc, char* argv[])
   char* file = argv[1];
   Volumes volume;
   LoadVolume(file, &volume);
+  //Load VTK volume data
+  LoadVolumeVTK(file, &volume);
+  //vtkSmartPointer<vtkNrrdReader> readerVTK = vtkSmartPointer<vtkNrrdReader>::New();
+  //readerVTK->SetFileName(file);
 
   // Establish connections
   Clients client1(argv[2],atoi(argv[3]));
@@ -670,7 +737,8 @@ int main(int argc, char* argv[])
   VolumeType::SizeType size = volume.volumeData->GetLargestPossibleRegion().GetSize();
   int dSize[2]; dSize[0]=size[0]; dSize[1]=size[1];
 
-  resliceImageVolume(&volume, dStart, dSize, &sliceImage);
+  //resliceImageVolume(&volume, dStart, dSize, &sliceImage);
+  resliceImageVolumeVTK(volume.readerVTK, dStart, dSize, &sliceImage);
 
   sliceImage.ITKtoIGTImage();
   sliceImage.imgMsg->SetDeviceName("sliceImage");
