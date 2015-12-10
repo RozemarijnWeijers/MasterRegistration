@@ -65,7 +65,7 @@ class Images
   int IGTtoITKImage();
   int ITKtoIGTImage();
   void SetParametersFromIGT();
-  void SetParametersFromITK();
+  void SetParametersFromITK( double[3], double[3] );//ImageType::PointType, ImageType::SpacingType );
 
   ImageType::Pointer imageData;
   igtl::ImageMessage::Pointer imgMsg;
@@ -75,6 +75,7 @@ class Images
   int sizeIm[3];
   float originIm[3];
   float spacingIm[3];
+  igtl::Matrix4x4   matrixIm;   // image origin and orientation matrix
 
 };
 
@@ -90,23 +91,22 @@ Images::Images()
 void Images::SetParametersFromIGT()
 {
 
-  this->imgMsg->GetDimensions(this->sizeIm);
-  this->imgMsg->GetOrigin(this->originIm);
-  this->imgMsg->GetSpacing(this->spacingIm);
+  this->imgMsg->GetDimensions( this->sizeIm );
+  this->imgMsg->GetOrigin( this->originIm );
+  this->imgMsg->GetSpacing( this->spacingIm );
+  this->imgMsg->GetMatrix( this->matrixIm );
 
   return;
 
 }
 
-void Images::SetParametersFromITK()
+void Images::SetParametersFromITK( double origin[3], double spacing[3] )
 {
 
-  ImageType::SizeType size = this->imageData->GetLargestPossibleRegion().GetSize();
-  sizeIm[0] = size[0]; sizeIm[1] = size[1]; sizeIm[2] = 1;
-  ImageType::PointType origin = this->imageData->GetOrigin();
-  originIm[0] = origin[0]; originIm[1] = origin[1]; originIm[2] = origin[2];
-  ImageType::SpacingType spacing = this->imageData->GetSpacing();
-  spacingIm[0] = spacing[0]; spacingIm[1] = spacing[1]; spacingIm[2] = spacing[2];
+  ImageType::SizeType               size = this->imageData->GetLargestPossibleRegion().GetSize();
+  this->sizeIm[0] = size[0];        this->sizeIm[1] = size[1];          this->sizeIm[2] = 1;
+  this->originIm[0] = origin[0];    this->originIm[1] = origin[1];      this->originIm[2] = origin[2];
+  this->spacingIm[0] = spacing[0];  this->spacingIm[1] = spacing[1];    this->spacingIm[2] = spacing[2]; //laatste is 0
 
   return;
 
@@ -116,28 +116,28 @@ int Images::IGTtoITKImage()
 {
 
   // Retrieve the image data from image message
-  int       size[3];          // image dimension (pixels)
-  float     spacing[3];       // spacing (mm/pixel)
+  //int       size[3];          // image dimension (pixels)
+  //float     spacing[3];       // spacing (mm/pixel)
   float     spacingITK[0];    // spacing for 2D image (mm/pixel)
-  int       endian;           // endian (not used)
-  float     origin[3];        // origin ()
-  igtl::Matrix4x4   matrix;   // image origin and orientation matrix
+  //int       endian;           // endian (not used)
+  //float     origin[3];        // origin ()
+  //igtl::Matrix4x4   matrix;   // image origin and orientation matrix
 
-  endian = this->imgMsg->GetEndian();
-  this->imgMsg->GetDimensions( size );
-  this->imgMsg->GetSpacing( spacing );
-  this->imgMsg->GetMatrix( matrix );
-  this->imgMsg->GetOrigin( origin );
+  //endian = this->imgMsg->GetEndian();
+  //this->imgMsg->GetDimensions( size );
+  //this->imgMsg->GetSpacing( spacing );
+  //this->imgMsg->GetMatrix( matrix );
+  //this->imgMsg->GetOrigin( origin );
 
   // Set image data to ITK image (3D information -> 2D)
   ImageType::RegionType     region;
   ImageType::IndexType      start;
-  start[0] = origin[0];     start[1] = origin[1];
+  start[0] = this->originIm[0];     start[1] = this->originIm[1];//start[0] = origin[0];     start[1] = origin[1];
   ImageType::SizeType       sizeregion;
-  sizeregion[0] = size[0];  sizeregion[1] = size[1];
+  sizeregion[0] = this->sizeIm[0];  sizeregion[1] = sizeIm[1];//sizeregion[0] = size[0];  sizeregion[1] = size[1];
   region.SetSize( sizeregion );
   region.SetIndex( start );
-  spacingITK[0] = spacing[0]; spacingITK[1] = spacing[1];
+  spacingITK[0] = this->spacingIm[0]; spacingITK[1] = this->spacingIm[1];//spacingITK[0] = spacing[0]; spacingITK[1] = spacing[1];
 
   this->imageData->SetRegions( region );
   this->imageData->SetSpacing( spacingITK );
@@ -156,22 +156,29 @@ int Images::ITKtoIGTImage()
 
   // Retrieve the image data from ITK image
   ImageType::SizeType       size;
-  ImageType::IndexType      start;
-  ImageType::SpacingType    spacing;
+  //ImageType::IndexType      start;
+  //ImageType::SpacingType    spacing;
+  //ImageType::PointType      origin;
 
   size = this->imageData->GetLargestPossibleRegion().GetSize();
-  start = this->imageData->GetLargestPossibleRegion().GetIndex();
-  spacing = this->imageData->GetSpacing();
+  //start = this->imageData->GetLargestPossibleRegion().GetIndex();
+  //spacing = this->imageData->GetSpacing();
+  //origin = this->imageData->GetOrigin();
 
   // Set image data to image message (2D information -> 3D)
   int                       sizeIGT[3];
   ImageType::RegionType     region;
+  float                     originIGT[3];
   float                     spacingIGT[3];  // spacing (mm/pixel)
   int                       scalarType;     // always UINT8
   //int                     svoffset[3];    // sub-volume offset
   //int                     svsize[3];      // sub-volume size
-  sizeIGT[0] = size[0];         sizeIGT[1] = size[1];           sizeIGT[2] = 1;
-  spacingIGT[0] = spacing[0];   spacingIGT[1] = spacing[1];     spacingIGT[2] = spacing[1]; // third dimension?
+  //sizeIGT[0] = this->sizeIm[0];         sizeIGT[1] = this->sizeIm[1];           sizeIGT[2] = 1;//sizeIGT[0] = size[0];         sizeIGT[1] = size[1];           sizeIGT[2] = 1;
+  sizeIGT[0] = size[0];         sizeIGT[1] = size[1];           sizeIGT[2] = 1; //WAAROM??
+  spacingIGT[0] = this->spacingIm[0];   spacingIGT[1] = this->spacingIm[1];     spacingIGT[2] = this->spacingIm[2];//spacing[0];   spacingIGT[1] = spacing[1];     spacingIGT[2] = spacing[1]; // third dimension?
+  //spacingIGT[0] = spacing[0];   spacingIGT[1] = spacing[1];     spacingIGT[2] = spacing[1]; // third dimension?
+  originIGT[0] = this->originIm[0]+((this->sizeIm[0]-1)*this->spacingIm[0]/2);          originIGT[1] = this->originIm[1]+((this->sizeIm[1]-1)*this->spacingIm[1]/2);     originIGT[2] = this->originIm[2];//+((size[2]-1)*spacing[2]/2); // klopt nog niet
+  //originIGT[0] = origin[0]+((size[0]-1)*spacing[0]/2);          originIGT[1] = origin[1]+((size[1]-1)*spacing[1]/2);     originIGT[2] = origin[2];//+((size[2]-1)*spacing[2]/2); // klopt nog niet
   //svsize[0] = sizeIGT[0];     svsize[1] = sizeIGT[1];         svsize[2] = sizeIGT[2];
   //svoffset[0] = start[0];     svoffset[1] = start[1];         svoffset[2] = start[2];
   scalarType = igtl::ImageMessage::TYPE_UINT8;
@@ -179,6 +186,7 @@ int Images::ITKtoIGTImage()
   this->imgMsg->SetDimensions( sizeIGT );
   this->imgMsg->SetSpacing( spacingIGT );
   this->imgMsg->SetScalarType( scalarType );
+  this->imgMsg->SetOrigin( originIGT );
   //this->imgMsg->SetSubVolume( sizeIGT, svoffset );
   this->imgMsg->AllocateScalars();
 
@@ -199,6 +207,8 @@ class Volumes
   Volumes();
   int ITKtoIGTVolume();
   int VTKtoITKVolume();
+  void SetParametersFromITK();
+  void SetParametersFromVTK( double[3], double[3], int[3]);
 
   VolumeType::Pointer volumeData;
   vtkSmartPointer<vtkNrrdReader> readerVTK;
@@ -222,11 +232,35 @@ Volumes::Volumes()
 
 }
 
+void Volumes::SetParametersFromITK()
+{
+
+  VolumeType::SizeType              size = this->volumeData->GetLargestPossibleRegion().GetSize();
+  this->sizeVol[0] = size[0];       this->sizeVol[1] = size[1];        this->sizeVol[2] = size[2];
+  VolumeType::PointType             origin = this->volumeData->GetOrigin();
+  this->originVol[0] = origin[0];   this->originVol[1] = origin[1];    this->originVol[2] = origin[2];
+  VolumeType::SpacingType           spacing = this->volumeData->GetSpacing();
+  this->spacingVol[0] = spacing[0]; this->spacingVol[1] = spacing[1];  this->spacingVol[2] = spacing[2]; //laatste is 0
+
+  return;
+
+}
+
+void Volumes::SetParametersFromVTK( double origin[3], double spacing[3], int size[3])
+{
+
+  this->sizeVol[0] = size[0];       this->sizeVol[1] = size[1];        this->sizeVol[2] = size[2];
+  this->originVol[0] = origin[0];   this->originVol[1] = origin[1];    this->originVol[2] = origin[2];
+  this->spacingVol[0] = spacing[0]; this->spacingVol[1] = spacing[1];  this->spacingVol[2] = spacing[2]; //laatste is 0
+
+  return;
+
+}
 int Volumes::ITKtoIGTVolume()
 {
 
   // Retrieve the image data from ITK image
-  VolumeType::SizeType size;
+  /*VolumeType::SizeType size;
   VolumeType::IndexType start;
   VolumeType::PointType origin;
   VolumeType::SpacingType spacing;
@@ -234,7 +268,7 @@ int Volumes::ITKtoIGTVolume()
   size = this->volumeData->GetLargestPossibleRegion().GetSize();
   start = this->volumeData->GetLargestPossibleRegion().GetIndex();
   spacing = this->volumeData->GetSpacing();
-  origin = this->volumeData->GetOrigin();
+  origin = this->volumeData->GetOrigin();*/
 
   // Set volume data to image message
   int   sizeIGT[3];
@@ -243,9 +277,9 @@ int Volumes::ITKtoIGTVolume()
   float spacingIGT[3];    // spacing (mm/pixel)
   //int   svsize[3];      // sub-volume size
   //int   svoffset[3];    // sub-volume offset
-  sizeIGT[0] = size[0];         sizeIGT[1] = size[1];       sizeIGT[2] = size[2];
-  spacingIGT[0] = spacing[0];   spacingIGT[1] = spacing[1]; spacingIGT[2] = spacing[2];
-  originIGT[0] = origin[0]+((size[0]-1)*spacing[0]/2);      originIGT[1] = origin[1]+((size[1]-1)*spacing[1]/2);    originIGT[2] = origin[2]+((size[2]-1)*spacing[2]/2);
+  sizeIGT[0] = this->sizeVol[0];         sizeIGT[1] = this->sizeVol[1];           sizeIGT[2] = this->sizeVol[2];//sizeIGT[0] = size[0];         sizeIGT[1] = size[1];           sizeIGT[2] = 1;
+  spacingIGT[0] = this->spacingVol[0];   spacingIGT[1] = this->spacingVol[1];     spacingIGT[2] = this->spacingVol[2];//spacing[0];   spacingIGT[1] = spacing[1];     spacingIGT[2] = spacing[1]; // third dimension?
+  originIGT[0] = this->originVol[0]+((this->sizeVol[0]-1)*this->spacingVol[0]/2);          originIGT[1] = this->originVol[1]+((this->sizeVol[1]-1)*this->spacingVol[1]/2);     originIGT[2] = this->originVol[2]+((this->sizeVol[2]-1)*this->spacingVol[2]/2); // klopt nog niet
   //svsize[0] = sizeIGT[0];     svsize[1] = sizeIGT[1];     svsize[2] = sizeIGT[2];
   //svoffset[0] = start[0];     svoffset[1] = start[1];     svoffset[2] = start[2];
   scalarType = igtl::ImageMessage::TYPE_UINT8;
@@ -260,13 +294,6 @@ int Volumes::ITKtoIGTVolume()
   memcpy( this->imgMsg->GetScalarPointer(), volumeData->GetBufferPointer(), this->imgMsg->GetImageSize() );
   // Pack (serialize) and send
   this->imgMsg->Pack();
-
-  return 1;
-
-}
-
-int VTKtoITKVolume()
-{
 
   return 1;
 
@@ -303,7 +330,7 @@ Clients::Clients( char* host, int port )
 
 }
 
-int ReceiveImage(Clients* client, Images* image, igtl::TimeStamp::Pointer ts, igtl::MessageHeader::Pointer headerMsg, igtl::ImageMessage::Pointer imgMsg)
+int ReceiveImage( Clients* client, Images* image, igtl::TimeStamp::Pointer ts, igtl::MessageHeader::Pointer headerMsg, igtl::ImageMessage::Pointer imgMsg )
 {
 
   // Initialize receive buffer
@@ -337,6 +364,7 @@ int ReceiveImage(Clients* client, Images* image, igtl::TimeStamp::Pointer ts, ig
     int c = imgMsg->Unpack(1);
     if (c & igtl::MessageHeader::UNPACK_BODY) // if CRC check is OK
     {
+      image->SetParametersFromIGT();
       image->IGTtoITKImage();
       std::cerr<<"Image received"<<std::endl;
       return 0;
@@ -531,7 +559,22 @@ int LoadVolumeVTK( char* filename, Volumes* volume )
   volume->readerVTK->SetFileName( filename );
   volume->readerVTK->Update();
 
-  std::cerr << "VTKVolume Loaded" << std::endl;
+  // Set parameters
+  double    spacing[3];
+  double    origin[3];
+  int       dimensions[3];
+  volume->readerVTK->GetOutput()->GetSpacing( spacing );
+  volume->readerVTK->GetOutput()->GetOrigin( origin );
+  volume->readerVTK->GetOutput()->GetDimensions( dimensions );
+  bool RAS = true; //???
+  if ( RAS )
+  {
+    origin[0] = -1 * origin[0];
+    origin[1] = -1 * origin[1];
+  }
+  volume->SetParametersFromVTK( origin, spacing, dimensions );
+
+  std::cerr << "VTKVolume Loaded " << std::endl;
 
   return 1;
 
@@ -557,21 +600,17 @@ int LoadVolume( char* filename, Volumes* volume )
     return 0;
   }
 
+  // Set parameters
+  volume->SetParametersFromITK();
+
   std::cerr << "Volume Loaded" << std::endl;
 
   return 1;
 
 }
 
-int resliceImageVolumeVTK( vtkSmartPointer<vtkNrrdReader> readerVTK, int start[3], int size[2], Images* sliceImage ) // Not finished yet
+int resliceImageVolumeVTK( vtkSmartPointer<vtkNrrdReader> readerVTK, int start[3], double transformmatrix[16], Images* sliceImage ) // Not finished yet
 {
-
-  // Test matrix for reslicing axial
-  static double axialElements[16] = {
-            1, 0, 0, 0,
-            0, 1, 0, 0,
-            0, 0, 1, 0,
-            0, 0, 0, 1 };
 
   // Get image parameters from vtk volume(nrrd file)
   double    spacing[3];
@@ -581,6 +620,12 @@ int resliceImageVolumeVTK( vtkSmartPointer<vtkNrrdReader> readerVTK, int start[3
   readerVTK->Update();
   readerVTK->GetOutput()->GetSpacing( spacing );
   readerVTK->GetOutput()->GetOrigin( origin );
+  bool RAS = true; //???
+  if ( RAS )
+  {
+    origin[0] = -1 * origin[0];
+    origin[1] = -1 * origin[1];
+  }
   readerVTK->GetOutput()->GetDimensions( dimensions );
 
   std::cerr<< "origin: " << origin[0] << "," << origin[1] << "," << origin[2] << std::endl;
@@ -588,19 +633,19 @@ int resliceImageVolumeVTK( vtkSmartPointer<vtkNrrdReader> readerVTK, int start[3
   std::cerr<< "dimensions: " << dimensions[0] << "," << dimensions[1] << "," << dimensions[2] << std::endl;
 
   // Find the centre
-  double center[3];
-  center[0] = origin[0] + spacing[0] * 0.5 * dimensions[0];
-  center[1] = origin[1] + spacing[1] * 0.5 * dimensions[1];
-  center[2] = origin[2] + spacing[2] * 0.5 * dimensions[2];
+  double originslice[3];
+  originslice[0] = origin[0] + start[0];//origin[0] + spacing[0] * 0.5 * dimensions[0] + start[0];
+  originslice[1] = origin[1] + start[1];//origin[1] + spacing[1] * 0.5 * dimensions[1] + start[1];
+  originslice[2] = origin[2] + start[2];//origin[2] + spacing[2] * 0.5 * dimensions[2] + start[2];
 
   // Set the direction matrix for the reslice function
   vtkSmartPointer<vtkMatrix4x4> resliceAxes = vtkSmartPointer<vtkMatrix4x4>::New();
-  resliceAxes->DeepCopy( axialElements );
+  resliceAxes->DeepCopy( transformmatrix );
 
   // Set the point through which to slice
-  resliceAxes->SetElement( 0, 3, center[0] );
-  resliceAxes->SetElement( 1, 3, center[1] );
-  resliceAxes->SetElement( 2, 3, center[2] );
+  resliceAxes->SetElement( 0, 3, originslice[0] );
+  resliceAxes->SetElement( 1, 3, originslice[1] );
+  resliceAxes->SetElement( 2, 3, originslice[2] );
 
   // Extract a slice in the desired orientation through the desired point
   vtkSmartPointer<vtkImageReslice> reslice = vtkSmartPointer<vtkImageReslice>::New();
@@ -630,8 +675,10 @@ int resliceImageVolumeVTK( vtkSmartPointer<vtkNrrdReader> readerVTK, int start[3
   sliceImage->imageData->Graft( vtkImageToImageFilter->GetOutput() );
 
   // Set correct image parameters for the ITK image
-  sliceImage->imageData->SetOrigin( origin );
+  sliceImage->imageData->SetOrigin( originslice );
   sliceImage->imageData->SetSpacing( spacing );
+  sliceImage->SetParametersFromITK( originslice, spacing );
+  std::cerr<< originslice[0]<<", "<< originslice[1]<< ", "<< originslice[2]<< std::endl;
 
   return 1;
 
@@ -680,6 +727,7 @@ int resliceImageVolume( Volumes* volume, int dStart[3], int dsize[2], Images* sl
 
   sliceImage->imageData->SetSpacing( spacingsliceImage );
   sliceImage->imageData->SetOrigin( originsliceImage );
+
   sliceImage->imgMsg->SetOrigin( originsliceImage );
   sliceImage->imgMsg->SetSpacing( spacingsliceImage );
 
@@ -730,13 +778,17 @@ int main(int argc, char* argv[]) // Why is this one slow? and why does it stop t
   Images    sliceImage;
 
 
-  // Test resliceImage volume
+  // Test resliceImage volume, start point relative to volume coordinates (through which to slice)
   int       dStart[3];  dStart[0]=0;        dStart[1]=0;    dStart[2]=0;
-  VolumeType::SizeType  size = volume.volumeData->GetLargestPossibleRegion().GetSize();
-  int      dSize[2];    dSize[0]=size[0];   dSize[1]=size[1];
+  // Test matrix for reslicing axial
+  static double transformmatrix[16] = {
+            1, 0, 0, 0,
+            0, 1, 0, 0,
+            0, 0, 1, 0,
+            0, 0, 0, 1 };
 
   //resliceImageVolume(&volume, dStart, dSize, &sliceImage);
-  resliceImageVolumeVTK( volumeVTK.readerVTK, dStart, dSize, &sliceImage );
+  resliceImageVolumeVTK( volumeVTK.readerVTK, dStart, transformmatrix, &sliceImage );
 
   // Send the fixed image to Slicer
   sliceImage.ITKtoIGTImage();
@@ -749,7 +801,6 @@ int main(int argc, char* argv[]) // Why is this one slow? and why does it stop t
 
   // Allocate a time stamp, WHERE IS THIS USED?????????
   igtl::TimeStamp::Pointer ts = igtl::TimeStamp::New();
-
   // Receive first image
   ReceiveImage( &client1, &fixedImage, ts, headerMsg, fixedImage.imgMsg );
 
@@ -770,6 +821,7 @@ int main(int argc, char* argv[]) // Why is this one slow? and why does it stop t
 
         // Create imageMessage for registered image
         registeredImage.ITKtoIGTImage();
+        //registeredImage.SetParametersFromITK();
 
         // Calculate subtraction of registered and fixed image
         /*typedef itk::SubtractImageFilter <ImageType, ImageType > SubtractImageFilterType;
