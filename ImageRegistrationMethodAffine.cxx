@@ -32,14 +32,16 @@
 #include "igtlStatusMessage.h"
 #include <igtl_util.h>
 
-const    unsigned int    DimensionImage = 2;
-const    unsigned int    DimensionVolume = 3;
+#include "usrClient.h"
+#include "usrVolume.h"
+#include "usrImage.h"
+
 typedef  unsigned char   PixelType;
-typedef  itk::Image< PixelType, DimensionImage >  ImageType;
-typedef  itk::Image< PixelType, DimensionVolume >  VolumeType;
+typedef  itk::Image< PixelType, 2 >  ImageType;
+typedef  itk::Image< PixelType, 3 >  VolumeType;
 
 //  The transform that will map the fixed image into the moving image.
-typedef itk::AffineTransform< double, DimensionImage > TransformType;
+typedef itk::AffineTransform< double, 2 > TransformType;
 //  An optimizer is required to explore the parameter space of the transform in search of optimal values of the metric.
 typedef itk::RegularStepGradientDescentOptimizer OptimizerType;
 //  The metric will compare how well the two images match each other. Metric types are usually parameterized by the image types as it can be seen in the following type declaration.
@@ -56,7 +58,7 @@ typedef itk::VTKImageToImageFilter<ImageType> VTKImageToImageType;
 typedef RegistrationType::ParametersType ParametersType;
 
 
-class Images
+/*class Images
 {
 
   public:
@@ -198,8 +200,9 @@ int Images::ITKtoIGTImage()
   return 1;
 
 }
+*/
 
-class Volumes
+/*class Volumes
 {
 
   public:
@@ -211,7 +214,7 @@ class Volumes
   void SetParametersFromVTK( double[3], double[3], int[3]);
 
   VolumeType::Pointer volumeData;
-  vtkSmartPointer<vtkNrrdReader> readerVTK;
+  vtkSmartPointer<vtkNrrdReader> VTKreader;
   igtl::ImageMessage::Pointer imgMsg;
 
   protected:
@@ -227,7 +230,7 @@ Volumes::Volumes()
 
   // Create imageMessage and ITKvolume for this volume
   volumeData  = VolumeType::New();
-  readerVTK = vtkSmartPointer<vtkNrrdReader>::New();
+  VTKreader = vtkSmartPointer<vtkNrrdReader>::New();
   imgMsg = igtl::ImageMessage::New();
 
 }
@@ -256,19 +259,20 @@ void Volumes::SetParametersFromVTK( double origin[3], double spacing[3], int siz
   return;
 
 }
+
 int Volumes::ITKtoIGTVolume()
 {
 
   // Retrieve the image data from ITK image
-  /*VolumeType::SizeType size;
-  VolumeType::IndexType start;
-  VolumeType::PointType origin;
-  VolumeType::SpacingType spacing;
+  //VolumeType::SizeType size;
+  //VolumeType::IndexType start;
+  //VolumeType::PointType origin;
+  //VolumeType::SpacingType spacing;
 
-  size = this->volumeData->GetLargestPossibleRegion().GetSize();
-  start = this->volumeData->GetLargestPossibleRegion().GetIndex();
-  spacing = this->volumeData->GetSpacing();
-  origin = this->volumeData->GetOrigin();*/
+  //size = this->volumeData->GetLargestPossibleRegion().GetSize();
+  //start = this->volumeData->GetLargestPossibleRegion().GetIndex();
+  //spacing = this->volumeData->GetSpacing();
+  //origin = this->volumeData->GetOrigin();
 
   // Set volume data to image message
   int   sizeIGT[3];
@@ -297,9 +301,9 @@ int Volumes::ITKtoIGTVolume()
 
   return 1;
 
-}
+}*/
 
-class Clients
+/*class Clients
 {
 
   public:
@@ -328,9 +332,9 @@ Clients::Clients( char* host, int port )
 
   std::cerr << "Client is connected to server" << host <<":"<< port<< std::endl;
 
-}
+}*/
 
-int ReceiveImage( Clients* client, Images* image, igtl::TimeStamp::Pointer ts, igtl::MessageHeader::Pointer headerMsg, igtl::ImageMessage::Pointer imgMsg )
+/*int ReceiveImage( Clients* client, Images* image, igtl::TimeStamp::Pointer ts, igtl::MessageHeader::Pointer headerMsg, igtl::ImageMessage::Pointer imgMsg )
 {
 
   // Initialize receive buffer
@@ -377,9 +381,9 @@ int ReceiveImage( Clients* client, Images* image, igtl::TimeStamp::Pointer ts, i
 
   return 1;
 
-}
+}*/
 
-/*=void ProjectImage(Images* image, igtl::Matrix4x4 matrixigt, Images* outputImage)
+/*void ProjectImage(Images* image, igtl::Matrix4x4 matrixigt, Images* outputImage)
 {
   typedef itk::ResampleImageFilter< ImageType, ImageType >    ResampleFilterType; //types?
 
@@ -556,16 +560,16 @@ int LoadVolumeVTK( char* filename, Volumes* volume )
 {
 
   // Open file reader and set NRRD file as input
-  volume->readerVTK->SetFileName( filename );
-  volume->readerVTK->Update();
+  volume->VTKreader->SetFileName( filename );
+  volume->VTKreader->Update();
 
   // Set parameters
   double    spacing[3];
   double    origin[3];
   int       dimensions[3];
-  volume->readerVTK->GetOutput()->GetSpacing( spacing );
-  volume->readerVTK->GetOutput()->GetOrigin( origin );
-  volume->readerVTK->GetOutput()->GetDimensions( dimensions );
+  volume->VTKreader->GetOutput()->GetSpacing( spacing );
+  volume->VTKreader->GetOutput()->GetOrigin( origin );
+  volume->VTKreader->GetOutput()->GetDimensions( dimensions );
   bool RAS = true; //???
   if ( RAS )
   {
@@ -580,7 +584,7 @@ int LoadVolumeVTK( char* filename, Volumes* volume )
 
 }
 
-int LoadVolume( char* filename, Volumes* volume )
+/*int LoadVolume( char* filename, Volumes* volume )
 {
 
   // Open file reader and set NRRD file as input
@@ -607,9 +611,9 @@ int LoadVolume( char* filename, Volumes* volume )
 
   return 1;
 
-}
+}*/
 
-int resliceImageVolumeVTK( vtkSmartPointer<vtkNrrdReader> readerVTK, int start[3], double transformmatrix[16], Images* sliceImage ) // Not finished yet
+int resliceImageVolumeVTK( vtkSmartPointer<vtkNrrdReader> VTKreader, int start[3], double transformmatrix[16], Images* sliceImage ) // Not finished yet
 {
 
   // Get image parameters from vtk volume(nrrd file)
@@ -617,16 +621,16 @@ int resliceImageVolumeVTK( vtkSmartPointer<vtkNrrdReader> readerVTK, int start[3
   double    origin[3];
   int       dimensions[3];
 
-  readerVTK->Update();
-  readerVTK->GetOutput()->GetSpacing( spacing );
-  readerVTK->GetOutput()->GetOrigin( origin );
+  VTKreader->Update();
+  VTKreader->GetOutput()->GetSpacing( spacing );
+  VTKreader->GetOutput()->GetOrigin( origin );
   bool RAS = true; //???
   if ( RAS )
   {
     origin[0] = -1 * origin[0];
     origin[1] = -1 * origin[1];
   }
-  readerVTK->GetOutput()->GetDimensions( dimensions );
+  VTKreader->GetOutput()->GetDimensions( dimensions );
 
   std::cerr<< "origin: " << origin[0] << "," << origin[1] << "," << origin[2] << std::endl;
   std::cerr<< "spacing: " << spacing[0] << "," << spacing[1] << "," << spacing[2] << std::endl;
@@ -649,7 +653,7 @@ int resliceImageVolumeVTK( vtkSmartPointer<vtkNrrdReader> readerVTK, int start[3
 
   // Extract a slice in the desired orientation through the desired point
   vtkSmartPointer<vtkImageReslice> reslice = vtkSmartPointer<vtkImageReslice>::New();
-  reslice->SetInputConnection( readerVTK->GetOutputPort() );
+  reslice->SetInputConnection( VTKreader->GetOutputPort() );
   reslice->SetOutputDimensionality( 2 );
   reslice->SetResliceAxes( resliceAxes );
   reslice->SetInterpolationModeToLinear();
@@ -757,19 +761,27 @@ int main(int argc, char* argv[]) // Why is this one slow? and why does it stop t
   Volumes volumeVTK;
 
   // Load ITK volume data
-  LoadVolume( file, &volume );
+  volume.LoadVolume( file );
+  //LoadVolume( file, &volume );
 
   //Load VTK volume data
-  LoadVolumeVTK( file, &volumeVTK );
+  //LoadVolumeVTK( file, &volumeVTK );
 
   // Establish connections
   Clients client1( argv[2],atoi( argv[3] ) );
   Clients client2( argv[4],atoi( argv[5] ) );
   Clients client3( argv[6],atoi( argv[7] ) );
+  client1.ReceiveImage();
+  //Images image;
+  //image.imgMsg = client1.imgMsg;
+  //image.SetParametersFromIGT();
+  //client2.imgMsg = image.imgMsg;
+  //client2.SendImage();
 
   // Send ITK volume to Slicer
   volume.ITKtoIGTVolume();
-  client2.socket->Send( volume.imgMsg->GetPackPointer(), volume.imgMsg->GetPackSize() );
+  client2.imgMsg = volume.imgMsg;
+  client2.SendImage();
 
   // Create images
   Images    fixedImage;
@@ -779,7 +791,7 @@ int main(int argc, char* argv[]) // Why is this one slow? and why does it stop t
 
 
   // Test resliceImage volume, start point relative to volume coordinates (through which to slice)
-  int       dStart[3];  dStart[0]=0;        dStart[1]=0;    dStart[2]=0;
+  /*int       dStart[3];  dStart[0]=0;        dStart[1]=0;    dStart[2]=0;
   // Test matrix for reslicing axial
   static double transformmatrix[16] = {
             1, 0, 0, 0,
@@ -788,7 +800,7 @@ int main(int argc, char* argv[]) // Why is this one slow? and why does it stop t
             0, 0, 0, 1 };
 
   //resliceImageVolume(&volume, dStart, dSize, &sliceImage);
-  resliceImageVolumeVTK( volumeVTK.readerVTK, dStart, transformmatrix, &sliceImage );
+  resliceImageVolumeVTK( volumeVTK.VTKreader, dStart, transformmatrix, &sliceImage );
 
   // Send the fixed image to Slicer
   sliceImage.ITKtoIGTImage();
@@ -803,8 +815,8 @@ int main(int argc, char* argv[]) // Why is this one slow? and why does it stop t
   igtl::TimeStamp::Pointer ts = igtl::TimeStamp::New();
   // Receive first image
   ReceiveImage( &client1, &fixedImage, ts, headerMsg, fixedImage.imgMsg );
-
-  while ( 1 )
+*/
+  /*while ( 1 )
   {
     for ( int i = 0; i < 100; i ++ ) //WHY 100?
     {
@@ -821,7 +833,7 @@ int main(int argc, char* argv[]) // Why is this one slow? and why does it stop t
 
         // Create imageMessage for registered image
         registeredImage.ITKtoIGTImage();
-        //registeredImage.SetParametersFromITK();
+        //registeredImage.SetParametersFromITK();*/
 
         // Calculate subtraction of registered and fixed image
         /*typedef itk::SubtractImageFilter <ImageType, ImageType > SubtractImageFilterType;
@@ -849,7 +861,7 @@ int main(int argc, char* argv[]) // Why is this one slow? and why does it stop t
         subtract2.imgMsg->Pack();*/
 
         // Set massages names
-        fixedImage.imgMsg->SetDeviceName( "fixedImage" );
+        /*fixedImage.imgMsg->SetDeviceName( "fixedImage" );
         fixedImage.imgMsg->Pack();
         movingImage.imgMsg->SetDeviceName( "movingImage" );
         movingImage.imgMsg->Pack();
@@ -870,7 +882,7 @@ int main(int argc, char* argv[]) // Why is this one slow? and why does it stop t
        }
     }
     std::cerr<< "Stopped receiving messages" <<std::endl;
-  }
+  }*/
 
   // Close connection (The example code never reaches this section ...)
   client1.socket->CloseSocket();
