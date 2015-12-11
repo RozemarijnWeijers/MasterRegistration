@@ -35,6 +35,8 @@
 #include "usrClient.h"
 #include "usrVolume.h"
 #include "usrImage.h"
+#include "usrRegisterImage.h"
+#include "usrResliceVolume.h"
 
 typedef  unsigned char   PixelType;
 typedef  itk::Image< PixelType, 2 >  ImageType;
@@ -556,7 +558,7 @@ int RegistrationFunction( Images* fixedImagep, Images* movingImagep, Images* reg
 
 }
 
-int LoadVolumeVTK( char* filename, Volumes* volume )
+/*int LoadVolumeVTK( char* filename, Volumes* volume )
 {
 
   // Open file reader and set NRRD file as input
@@ -582,7 +584,7 @@ int LoadVolumeVTK( char* filename, Volumes* volume )
 
   return 1;
 
-}
+}*/
 
 /*int LoadVolume( char* filename, Volumes* volume )
 {
@@ -762,10 +764,6 @@ int main(int argc, char* argv[]) // Why is this one slow? and why does it stop t
 
   // Load ITK volume data
   volume.LoadVolume( file );
-  //LoadVolume( file, &volume );
-
-  //Load VTK volume data
-  //LoadVolumeVTK( file, &volumeVTK );
 
   // Establish connections
   Clients client1( argv[2],atoi( argv[3] ) );

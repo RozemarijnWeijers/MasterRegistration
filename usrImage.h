@@ -1,3 +1,5 @@
+#ifndef IMAGE_H
+#define IMAGE_H
 #include "itkImage.h"
 #include "itkImageRegistrationMethod.h"
 #include "itkImageFileReader.h"
@@ -47,3 +49,5 @@ class Images
   igtl::Matrix4x4   matrixIm;   // image origin and orientation matrix
 
 };
+
+#endif //IMAGE_H

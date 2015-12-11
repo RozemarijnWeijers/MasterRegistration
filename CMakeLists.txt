@@ -24,12 +24,16 @@ set( USR_SOURCES
 	usrClient.cxx
 	usrVolume.cxx
 	usrImage.cxx
+	usrRegisterImage.cxx
+	usrResliceVolume.cxx
 	)
 
 set( USR_HEADERS
 	usrClient.h
 	usrVolume.h
 	usrImage.h
+	usrRegisterImage.h
+	usrResliceVolume.h
 	)
 
 add_library(usrLib ${USR_SOURCES} ${USR_HEADERS})
