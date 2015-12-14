@@ -1,20 +1,19 @@
 #include "igtlOSUtil.h"
 #include "igtlMessageHeader.h"
-#include "igtlTransformMessage.h"
-#include "igtlPositionMessage.h"
 #include "igtlImageMessage.h"
 #include "igtlClientSocket.h"
-#include "igtlStatusMessage.h"
-#include <igtl_util.h>
 
-class Clients
+class ClientIGT
 {
 
   public:
 
-  Clients( char*, int );
+  ClientIGT();
+  ~ClientIGT();
+  void ConnectToServer( char*, int );
+  void DisconnectFromServer();
   int ReceiveImage();
-  int SendImage();
+  void SendImage();
 
   igtl::ClientSocket::Pointer socket;
   igtl::ImageMessage::Pointer imgMsg;
@@ -22,7 +21,7 @@ class Clients
   protected:
 
   igtl::MessageHeader::Pointer headerMsg;
-  igtl::TimeStamp::Pointer ts;
+  igtl::TimeStamp::Pointer timeStamp;
   igtlUint32 sec;
   igtlUint32 nanosec;
 

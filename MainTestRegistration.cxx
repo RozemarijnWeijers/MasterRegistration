@@ -32,11 +32,11 @@
 #include "igtlStatusMessage.h"
 #include <igtl_util.h>
 
-#include "usrClient.h"
+#include "usrClientIGT.h"
 #include "usrVolume.h"
 #include "usrImage.h"
-#include "usrRegisterImage.h"
-#include "usrResliceVolume.h"
+#include "usrImageRegistration.h"
+#include "usrVolumeReslice.h"
 
 typedef  unsigned char   PixelType;
 typedef  itk::Image< PixelType, 2 >  ImageType;
@@ -225,9 +225,9 @@ int Images::ITKtoIGTImage()
   float originVol[3];
   float spacingVol[3];
 
-};
+};*/
 
-Volumes::Volumes()
+/*Volumes::Volumes()
 {
 
   // Create imageMessage and ITKvolume for this volume
@@ -235,9 +235,9 @@ Volumes::Volumes()
   VTKreader = vtkSmartPointer<vtkNrrdReader>::New();
   imgMsg = igtl::ImageMessage::New();
 
-}
+}*/
 
-void Volumes::SetParametersFromITK()
+/*void Volumes::SetParametersFromITK()
 {
 
   VolumeType::SizeType              size = this->volumeData->GetLargestPossibleRegion().GetSize();
@@ -249,9 +249,9 @@ void Volumes::SetParametersFromITK()
 
   return;
 
-}
+}*/
 
-void Volumes::SetParametersFromVTK( double origin[3], double spacing[3], int size[3])
+/*void Volumes::SetParametersFromVTK( double origin[3], double spacing[3], int size[3])
 {
 
   this->sizeVol[0] = size[0];       this->sizeVol[1] = size[1];        this->sizeVol[2] = size[2];
@@ -260,9 +260,9 @@ void Volumes::SetParametersFromVTK( double origin[3], double spacing[3], int siz
 
   return;
 
-}
+}*/
 
-int Volumes::ITKtoIGTVolume()
+/*int Volumes::ITKtoIGTVolume()
 {
 
   // Retrieve the image data from ITK image
@@ -305,22 +305,22 @@ int Volumes::ITKtoIGTVolume()
 
 }*/
 
-/*class Clients
+/*class ClientIGTs
 {
 
   public:
 
-  Clients( char*, int );
+  ClientIGTs( char*, int );
 
-  igtl::ClientSocket::Pointer socket;
+  igtl::ClientIGTSocket::Pointer socket;
 
 };
 
-Clients::Clients( char* host, int port )
+ClientIGTs::ClientIGTs( char* host, int port )
 {
 
-  //Open a socket for th client
-  socket = igtl::ClientSocket::New();
+  //Open a socket for th ClientIGT
+  socket = igtl::ClientIGTSocket::New();
 
   //Connect to the server
   int r = socket->ConnectToServer( host, port );
@@ -332,20 +332,20 @@ Clients::Clients( char* host, int port )
     exit(0);
   }
 
-  std::cerr << "Client is connected to server" << host <<":"<< port<< std::endl;
+  std::cerr << "ClientIGT is connected to server" << host <<":"<< port<< std::endl;
 
 }*/
 
-/*int ReceiveImage( Clients* client, Images* image, igtl::TimeStamp::Pointer ts, igtl::MessageHeader::Pointer headerMsg, igtl::ImageMessage::Pointer imgMsg )
+/*int ReceiveImage( ClientIGTs* ClientIGT, Images* image, igtl::TimeStamp::Pointer ts, igtl::MessageHeader::Pointer headerMsg, igtl::ImageMessage::Pointer imgMsg )
 {
 
   // Initialize receive buffer
   headerMsg->InitPack();
 
   // Receive header message
-  if (0 == client->socket->Receive(headerMsg->GetPackPointer(), headerMsg->GetPackSize()))
+  if (0 == ClientIGT->socket->Receive(headerMsg->GetPackPointer(), headerMsg->GetPackSize()))
   {
-    client->socket->CloseSocket();
+    ClientIGT->socket->CloseSocket();
     std::cerr<< " Exit 0 " <<std::endl;
     return 0;
   }
@@ -365,7 +365,7 @@ Clients::Clients( char* host, int port )
     imgMsg->SetMessageHeader(headerMsg);
     imgMsg->AllocatePack();
     // Receive transform data from the socket
-    client->socket->Receive(imgMsg->GetPackBodyPointer(), imgMsg->GetPackBodySize());
+    ClientIGT->socket->Receive(imgMsg->GetPackBodyPointer(), imgMsg->GetPackBodySize());
     // Deserialize the transform data // If you want to skip CRC check, call Unpack() without argument.
     int c = imgMsg->Unpack(1);
     if (c & igtl::MessageHeader::UNPACK_BODY) // if CRC check is OK
@@ -378,7 +378,7 @@ Clients::Clients( char* host, int port )
   }
   else
   {
-    client->socket->Skip(headerMsg->GetBodySizeToRead(), 0);
+    ClientIGT->socket->Skip(headerMsg->GetBodySizeToRead(), 0);
   }
 
   return 1;
@@ -456,7 +456,7 @@ Clients::Clients( char* host, int port )
   return;
 }*/
 
-int RegisteredImage( Images* movingImagep, Images* secondImagep, Images* registeredImagep, RegistrationType::Pointer registration )
+/*int RegisteredImage( Images* movingImagep, Images* secondImagep, Images* registeredImagep, RegistrationType::Pointer registration )
 {
 
   // Use resulting transform from the registration to map the moving image into the moving/fixed image space
@@ -486,9 +486,9 @@ int RegisteredImage( Images* movingImagep, Images* secondImagep, Images* registe
 
   return 1;
 
-}
+}*/
 
-int RegistrationFunction( Images* fixedImagep, Images* movingImagep, Images* registeredImagep )
+/*int RegistrationFunction( Images* fixedImagep, Images* movingImagep, Images* registeredImagep )
 {
 
   // Create components registration function
@@ -556,7 +556,7 @@ int RegistrationFunction( Images* fixedImagep, Images* movingImagep, Images* reg
 
   return 1;
 
-}
+}*/
 
 /*int LoadVolumeVTK( char* filename, Volumes* volume )
 {
@@ -615,7 +615,7 @@ int RegistrationFunction( Images* fixedImagep, Images* movingImagep, Images* reg
 
 }*/
 
-int resliceImageVolumeVTK( vtkSmartPointer<vtkNrrdReader> VTKreader, int start[3], double transformmatrix[16], Images* sliceImage ) // Not finished yet
+int resliceImageVolumeVTK( vtkSmartPointer<vtkNrrdReader> VTKreader, int start[3], double transformmatrix[16], Image* sliceImage ) // Not finished yet
 {
 
   // Get image parameters from vtk volume(nrrd file)
@@ -690,7 +690,7 @@ int resliceImageVolumeVTK( vtkSmartPointer<vtkNrrdReader> VTKreader, int start[3
 
 }
 
-int resliceImageVolume( Volumes* volume, int dStart[3], int dsize[2], Images* sliceImage )
+int resliceImageVolume( Volume* volume, int dStart[3], int dsize[2], Image* sliceImage )
 {
 
   // Set parameters for desired image (reslice/ crop)
@@ -759,34 +759,29 @@ int main(int argc, char* argv[]) // Why is this one slow? and why does it stop t
 
   // Load volume data
   char* file = argv[1];
-  Volumes volume;
-  Volumes volumeVTK;
+  Volume volume;
 
   // Load ITK volume data
   volume.LoadVolume( file );
 
   // Establish connections
-  Clients client1( argv[2],atoi( argv[3] ) );
-  Clients client2( argv[4],atoi( argv[5] ) );
-  Clients client3( argv[6],atoi( argv[7] ) );
-  client1.ReceiveImage();
-  //Images image;
-  //image.imgMsg = client1.imgMsg;
-  //image.SetParametersFromIGT();
-  //client2.imgMsg = image.imgMsg;
-  //client2.SendImage();
+  ClientIGT clientIGT1;
+  clientIGT1.ConnectToServer( argv[2],atoi( argv[3] ) );
+  ClientIGT clientIGT2;
+  clientIGT2.ConnectToServer( argv[4],atoi( argv[5] ) );
+  ClientIGT clientIGT3;
+  clientIGT3.ConnectToServer( argv[6],atoi( argv[7] ) );
 
   // Send ITK volume to Slicer
-  volume.ITKtoIGTVolume();
-  client2.imgMsg = volume.imgMsg;
-  client2.SendImage();
+  volume.ConvertITKtoIGTVolume();
+  clientIGT2.imgMsg = volume.imgMsg;
+  clientIGT2.SendImage();
 
   // Create images
-  Images    fixedImage;
-  Images    movingImage;
-  Images    registeredImage;
-  Images    sliceImage;
-
+  Image    fixedImage;
+  Image    movingImage;
+  Image    registeredImage;
+  Image    sliceImage;
 
   // Test resliceImage volume, start point relative to volume coordinates (through which to slice)
   /*int       dStart[3];  dStart[0]=0;        dStart[1]=0;    dStart[2]=0;
@@ -804,7 +799,7 @@ int main(int argc, char* argv[]) // Why is this one slow? and why does it stop t
   sliceImage.ITKtoIGTImage();
   sliceImage.imgMsg->SetDeviceName( "sliceImage" );
   sliceImage.imgMsg->Pack();
-  client2.socket->Send( sliceImage.imgMsg->GetPackPointer(), sliceImage.imgMsg->GetPackSize() );
+  clientIGT2.socket->Send( sliceImage.imgMsg->GetPackPointer(), sliceImage.imgMsg->GetPackSize() );
 
   // Create a message buffer to receive header and image message
   igtl::MessageHeader::Pointer headerMsg = igtl::MessageHeader::New();
@@ -812,26 +807,50 @@ int main(int argc, char* argv[]) // Why is this one slow? and why does it stop t
   // Allocate a time stamp, WHERE IS THIS USED?????????
   igtl::TimeStamp::Pointer ts = igtl::TimeStamp::New();
   // Receive first image
-  ReceiveImage( &client1, &fixedImage, ts, headerMsg, fixedImage.imgMsg );
+  ReceiveImage( &clientIGT1, &fixedImage, ts, headerMsg, fixedImage.imgMsg );
 */
-  /*while ( 1 )
+
+  clientIGT1.ReceiveImage();
+  fixedImage.imgMsg = clientIGT1.imgMsg;
+  fixedImage.SetParametersFromIGT();
+  fixedImage.ConvertIGTtoITKImage();
+
+  ImageRegistration registration;
+  double initialMatrix[9];
+
+  while ( 1 )
   {
     for ( int i = 0; i < 100; i ++ ) //WHY 100?
     {
-      if ( ReceiveImage( &client1, &movingImage, ts, headerMsg, movingImage.imgMsg ) == 0 )
+      if ( clientIGT1.ReceiveImage() == 0 )
       {
+        movingImage.imgMsg = clientIGT1.imgMsg;
+        movingImage.SetParametersFromIGT();
+        movingImage.ConvertIGTtoITKImage();
+
         // Make sure to have two different images
         if ( fixedImage.imgMsg == movingImage.imgMsg )
         {
           std::cerr<<"Fixed and moving are the same"<<std::endl;
         }
-
+        else
+        {
         // Register fixed and moving image (2D/2D Registration of two subsequential images), two sequential received images for now, but this wil later be the received image with the reslice of the volume at that position
-        RegistrationFunction( &fixedImage, &movingImage, &registeredImage );
+        initialMatrix[0] = 1; initialMatrix[1] = 0; initialMatrix[2] = 0;
+        initialMatrix[3] = 0; initialMatrix[4] = 1; initialMatrix[5] = 0;
+        initialMatrix[6] = 0; initialMatrix[7] = 0; initialMatrix[8] = 1;
+
+        registration.SetFixedImage( &fixedImage );
+        registration.SetMovingImage( &movingImage );
+        //registration.SetInitialMatrix( initialMatrix );
+        registration.RegisterImages();
+        //registrationRegistrationFunction( &fixedImage, &movingImage, &registeredImage );
 
         // Create imageMessage for registered image
-        registeredImage.ITKtoIGTImage();
-        //registeredImage.SetParametersFromITK();*/
+        //registeredImage = registration.registeredImage;
+        //registeredImage.SetParametersFromITK();
+        //registeredImage.ITKtoIGTImage();
+        //registeredImage.SetParametersFromITK();
 
         // Calculate subtraction of registered and fixed image
         /*typedef itk::SubtractImageFilter <ImageType, ImageType > SubtractImageFilterType;
@@ -859,32 +878,38 @@ int main(int argc, char* argv[]) // Why is this one slow? and why does it stop t
         subtract2.imgMsg->Pack();*/
 
         // Set massages names
-        /*fixedImage.imgMsg->SetDeviceName( "fixedImage" );
-        fixedImage.imgMsg->Pack();
-        movingImage.imgMsg->SetDeviceName( "movingImage" );
-        movingImage.imgMsg->Pack();
-        registeredImage.imgMsg->SetDeviceName( "registeredImage" );
-        registeredImage.imgMsg->Pack();
+        clientIGT3.imgMsg = fixedImage.imgMsg;
+        clientIGT3.imgMsg->SetDeviceName( "fixedImage" );
+        clientIGT3.SendImage();
+        //fixedImage.imgMsg->Pack();
+        clientIGT3.imgMsg = movingImage.imgMsg;
+        clientIGT3.imgMsg->SetDeviceName( "movingImage" );
+        clientIGT3.SendImage();
+        //movingImage.imgMsg->Pack();
+        //registeredImage.imgMsg->SetDeviceName( "registeredImage" );
+        //clientIGT3.SendImage( registeredImage.imgMsg );
+        //registeredImage.imgMsg->Pack();
 
         // Send image messages to sliceImager for visualization
-        client3.socket->Send( fixedImage.imgMsg->GetPackPointer(), fixedImage.imgMsg->GetPackSize() );
-        client3.socket->Send( movingImage.imgMsg->GetPackPointer(), movingImage.imgMsg->GetPackSize() );
-        client3.socket->Send( registeredImage.imgMsg->GetPackPointer(), registeredImage.imgMsg->GetPackSize() );
-        //client3.socket->Send(subtract1.imgMsg->GetPackPointer(), subtract1.imgMsg->GetPackSize());
-        //client3.socket->Send(subtract2.imgMsg->GetPackPointer(), subtract2.imgMsg->GetPackSize());
+        //clientIGT3.socket->Send( fixedImage.imgMsg->GetPackPointer(), fixedImage.imgMsg->GetPackSize() );
+        //clientIGT3.socket->Send( movingImage.imgMsg->GetPackPointer(), movingImage.imgMsg->GetPackSize() );
+        //clientIGT3.socket->Send( registeredImage.imgMsg->GetPackPointer(), registeredImage.imgMsg->GetPackSize() );
+        //clientIGT3.socket->Send(subtract1.imgMsg->GetPackPointer(), subtract1.imgMsg->GetPackSize());
+        //clientIGT3.socket->Send(subtract2.imgMsg->GetPackPointer(), subtract2.imgMsg->GetPackSize());
 
         // Set moving image to fixed image so it can be registered to the next image received
-        Images  temp = movingImage;
-        movingImage = fixedImage;
-        fixedImage = temp;
+        //Images  temp = movingImage;
+        fixedImage = movingImage;
+        //fixedImage = temp;
+        }
        }
     }
     std::cerr<< "Stopped receiving messages" <<std::endl;
-  }*/
+  }
 
   // Close connection (The example code never reaches this section ...)
-  client1.socket->CloseSocket();
-  client2.socket->CloseSocket();
-  client3.socket->CloseSocket();
+  clientIGT1.socket->CloseSocket();
+  clientIGT2.socket->CloseSocket();
+  clientIGT3.socket->CloseSocket();
 }
 

@@ -1,26 +1,11 @@
-#include "itkImage.h"
-#include "itkImageRegistrationMethod.h"
-#include "itkImageFileReader.h"
-#include "itkImageFileWriter.h"
-#include "itkMeanSquaresImageToImageMetric.h"
-#include "itkRegularStepGradientDescentOptimizer.h"
-#include "itkResampleImageFilter.h"
-#include "itkRescaleIntensityImageFilter.h"
-#include "itkAffineTransform.h"
-#include "itkSubtractImageFilter.h"
-#include "itkTranslationTransform.h"
-#include <itkMatrix.h>
-#include <itkNrrdImageIO.h>
-#include <itkExtractImageFilter.h>
+#include "usrImageRegistration.h"
 
-#include "usrRegisterImage.h"
-
-RegisterImage::RegisterImage()
+ImageRegistration::ImageRegistration()
 {
 
   // Create components registration function
-  MetricType::Pointer           metric = MetricType::New();
-  InterpolatorType::Pointer     interpolator = InterpolatorType::New();
+  metric = MetricType::New();
+  interpolator = InterpolatorType::New();
   transform = TransformType::New();
   optimizer = OptimizerType::New();
   registration = RegistrationType::New();
@@ -36,11 +21,11 @@ RegisterImage::RegisterImage()
 
 }
 
-RegisterImage::~RegisterImage()
+ImageRegistration::~ImageRegistration()
 {
 }
 
-void RegisterImage::SetFixedImage(Images* imagePointer)
+void ImageRegistration::SetFixedImage(Image* imagePointer)
 {
 
   fixedImage = imagePointer;
@@ -49,7 +34,7 @@ void RegisterImage::SetFixedImage(Images* imagePointer)
 
 }
 
-void RegisterImage::SetMovingImage(Images* imagePointer)
+void ImageRegistration::SetMovingImage(Image* imagePointer)
 {
 
   movingImage = imagePointer;
@@ -58,18 +43,18 @@ void RegisterImage::SetMovingImage(Images* imagePointer)
 
 }
 
-void RegisterImage::SetInitialMatrix(double matrix[9])
+void ImageRegistration::SetInitialMatrix(double matrix[9])
 {
 
-  registrationMatrix[0] = matrix[0]; registrationMatrix[1] = matrix[1]; registrationMatrix[2] = matrix[2];
-  registrationMatrix[3] = matrix[3]; registrationMatrix[4] = matrix[4]; registrationMatrix[5] = matrix[5];
-  registrationMatrix[6] = matrix[6]; registrationMatrix[7] = matrix[7]; registrationMatrix[8] = matrix[8];
+  initialMatrix[0] = matrix[0]; initialMatrix[1] = matrix[1]; initialMatrix[2] = matrix[2];
+  initialMatrix[3] = matrix[3]; initialMatrix[4] = matrix[4]; initialMatrix[5] = matrix[5];
+  initialMatrix[6] = matrix[6]; initialMatrix[7] = matrix[7]; initialMatrix[8] = matrix[8];
 
   return;
 
 }
 
-void RegisterImage::RegistrationFunction()
+void ImageRegistration::RegisterImages()
 {
 
   // Set the registration inputs
@@ -122,7 +107,9 @@ void RegisterImage::RegistrationFunction()
   registrationMatrix[3] = finalParameters[2];
   registrationMatrix[4] = finalParameters[3];
   registrationMatrix[2] = finalParameters[4];
-  registrationMatrix[5] = finalParameters[5];  //KLOPT DIT??
+  registrationMatrix[5] = finalParameters[5];
+
+  metricValue = optimizer->GetValue();
 
   std::cout << "Final parameters 2D/2D-Registration: " << finalParameters << std::endl;
 
@@ -133,7 +120,7 @@ void RegisterImage::RegistrationFunction()
 
 }
 
-int RegisterImage::CreateRegisteredImage()
+int ImageRegistration::CreateRegisteredImage()
 {
 
   // Set moving image as input
@@ -151,9 +138,9 @@ int RegisterImage::CreateRegisteredImage()
   resampler->Update();
 
   // Create registered ITKimage
-  registeredImage->imageData = resampler->GetOutput();
-  //NOG AFMAKEN!!
-
+  Image* regim;
+  regim->imageData = resampler->GetOutput();
+  //registeredImage->imageData = regim.imageData;
 
   return 1;
 
