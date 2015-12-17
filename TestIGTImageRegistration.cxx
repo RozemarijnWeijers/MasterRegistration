@@ -615,7 +615,7 @@ ClientIGTs::ClientIGTs( char* host, int port )
 
 }*/
 
-int resliceImageVolumeVTK( vtkSmartPointer<vtkNrrdReader> VTKreader, int start[3], double transformmatrix[16], Image* sliceImage ) // Not finished yet
+/*int resliceImageVolumeVTK( vtkSmartPointer<vtkNrrdReader> VTKreader, int start[3], double transformmatrix[16], Image* sliceImage ) // Not finished yet
 {
 
   // Get image parameters from vtk volume(nrrd file)
@@ -662,7 +662,7 @@ int resliceImageVolumeVTK( vtkSmartPointer<vtkNrrdReader> VTKreader, int start[3
   reslice->Update();
 
   // Create a greyscale lookup table
-  /*vtkSmartPointer<vtkLookupTable> table = vtkSmartPointer<vtkLookupTable>::New();
+  vtkSmartPointer<vtkLookupTable> table = vtkSmartPointer<vtkLookupTable>::New();
   table->SetRange(0, 2000); // image intensity range
   table->SetValueRange(0.0, 1.0); // from black to white
   table->SetSaturationRange(0.0, 0.0); // no color saturation
@@ -672,7 +672,7 @@ int resliceImageVolumeVTK( vtkSmartPointer<vtkNrrdReader> VTKreader, int start[3
   // Map the image through the lookup table
   vtkSmartPointer<vtkImageMapToColors> color = vtkSmartPointer<vtkImageMapToColors>::New();
   color->SetLookupTable(table);
-  color->SetInputConnection(reslice->GetOutputPort());*/
+  color->SetInputConnection(reslice->GetOutputPort());
 
   // Convert the VTK image to an ITK image for further processing
   VTKImageToImageType::Pointer vtkImageToImageFilter = VTKImageToImageType::New();
@@ -683,14 +683,14 @@ int resliceImageVolumeVTK( vtkSmartPointer<vtkNrrdReader> VTKreader, int start[3
   // Set correct image parameters for the ITK image
   sliceImage->imageData->SetOrigin( originslice );
   sliceImage->imageData->SetSpacing( spacing );
-  sliceImage->SetParametersFromITK( originslice, spacing );
+  sliceImage->SetParametersFromITK(); //Set spacing and origin in imageData
   std::cerr<< originslice[0]<<", "<< originslice[1]<< ", "<< originslice[2]<< std::endl;
 
   return 1;
 
-}
+}*/
 
-int resliceImageVolume( Volume* volume, int dStart[3], int dsize[2], Image* sliceImage )
+/*int resliceImageVolume( Volume* volume, int dStart[3], int dsize[2], Image* sliceImage )
 {
 
   // Set parameters for desired image (reslice/ crop)
@@ -739,7 +739,7 @@ int resliceImageVolume( Volume* volume, int dStart[3], int dsize[2], Image* slic
 
   return 1;
 
-}
+}*/
 
 int main(int argc, char* argv[]) // Why is this one slow? and why does it stop to recognize image messages after the first ca. 20?
 {

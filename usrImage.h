@@ -14,19 +14,21 @@ class Image
 
   Image();
   ~Image();
+
   int   ConvertIGTtoITKImage();
   int   ConvertITKtoIGTImage();
   void  SetParametersFromIGT();
-  void  SetParametersFromITK( double[3], double[3] );//ImageType::PointType, ImageType::SpacingType );
+  void  SetParametersFromITK( double, double );
 
   ImageType::Pointer            imageData;
   igtl::ImageMessage::Pointer   imgMsg;
 
+  float             originImage[3];
+  float             spacingImage[3];
+
   protected:
 
   int               sizeImage[3];
-  float             originImage[3];
-  float             spacingImage[3];
   igtl::Matrix4x4   matrixImage;   // image origin and orientation matrix
 
 };

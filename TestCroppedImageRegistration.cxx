@@ -4,7 +4,7 @@
 #include "usrImageRegistration.h"
 #include "usrVolumeReslice.h"
 
-int cropImageVolume( Volume* volume, int dStart[3], int dsize[2], Image* sliceImage )
+void cropImageVolume( Volume* volume, int dStart[3], int dsize[2], Image* sliceImage )
 {
 
   typedef itk::ExtractImageFilter< VolumeType, ImageType > FilterType;
@@ -30,22 +30,19 @@ int cropImageVolume( Volume* volume, int dStart[3], int dsize[2], Image* sliceIm
   // Get and set parameters for reslices image    // spacing (mm/pixel)
 
   VolumeType::PointType         origin;
-  double                        startSliceImage[3];
+  double                        originSliceImage[3];
   double                        spacingSliceImage[3];
-  double                        originsliceImage[3];
-  float                         originsliceImage1[3];
-  VolumeType::SizeType          size1;
 
   float* spacing = volume->spacingVolume;
   float* start1 = volume->originVolume;
   spacingSliceImage[0] = spacing[0]; spacingSliceImage[1] = spacing[1]; spacingSliceImage[2] = spacing[2];
-  startSliceImage[0] = start1[0] + dStart[0]; startSliceImage[1] = start1[1] + dStart[1];   startSliceImage[2] = start1[2] + dStart[2];
+  originSliceImage[0] = start1[0] + dStart[0]; originSliceImage[1] = start1[1] + dStart[1];   originSliceImage[2] = start1[2] + dStart[2];
 
   sliceImage->imageData->SetSpacing( spacing );
-  sliceImage->imageData->SetOrigin( startSliceImage );
-  sliceImage->SetParametersFromITK( startSliceImage, spacingSliceImage );
+  sliceImage->imageData->SetOrigin( originSliceImage );
+  sliceImage->SetParametersFromITK( originSliceImage[2], spacingSliceImage[2] );
 
-  return 1;
+  return;
 
 }
 
@@ -76,12 +73,12 @@ int main(int argc, char* argv[])
   // Send volume to slicer
   volume.ConvertITKtoIGTVolume();
   client1.imgMsg = volume.imgMsg;
+  client1.imgMsg->SetDeviceName( "volume" );
   client1.SendImage();
 
   // Create images for registration
   Image    fixedImage;
   Image    movingImage;
-  Image    registeredImage;
 
   // Set parameters for testing resliceImage volume, get (part of) a slice from the volume
   int       sliceNumber = atoi(argv[4]);
@@ -95,7 +92,10 @@ int main(int argc, char* argv[])
 
   // Send the fixed image to Slicer
   fixedImage.ConvertITKtoIGTImage();
-  client1.imgMsg = volume.imgMsg;
+  float spac[3];
+  fixedImage.imgMsg->GetSpacing(spac);
+  std::cerr<< spac[0]<<std::endl;
+  client1.imgMsg = fixedImage.imgMsg;
   client1.imgMsg->SetDeviceName( "imageSlice" );
   client1.SendImage();
 
@@ -105,6 +105,10 @@ int main(int argc, char* argv[])
   double            bestMatch[2];
   ParametersType    finalParameters;
   double            initialMatrix[9] = {1, 0, 0, 0, 1, 0, 0, 0, 1};
+
+  ImageRegistration registration;
+  registration.SetFixedImage( &fixedImage );
+
   for ( int i = 0; i < testNumber; i++ )
   {
     // Measure running time for one reslice and registration loop
@@ -117,20 +121,19 @@ int main(int argc, char* argv[])
     cropImageVolume( &volume, dStart, dSize, &movingImage );
 
     // Register the moving and the fixed image and save th emetric values to find the best match
-    ImageRegistration registration;
-    registration.SetFixedImage( &fixedImage );
     registration.SetMovingImage( &movingImage );
     registration.SetInitialMatrix( initialMatrix );
     registration.RegisterImages();
-    std::cerr<<registration.registrationMatrix[5]<<std::endl;
-    //values[i] = RegistrationFunction( &fixedImage, &movingImage, &registeredImage, &finalParameters, 0 );
-    /*if ( i > 0 )
+    //registration.CreateRegisteredImage();
+    values[i] = registration.metricValue;
+
+    if ( i > 0 )
     {
       if( values[i] < bestMatch[1] )
       {
         bestMatch[0] = i;
         bestMatch[1] = values[i];
-        std::cerr << "Best value: " << bestMatch[1] << std::endl;
+        std::cerr << "New best value: " << bestMatch[1] << std::endl;
       }
     }
     else
@@ -138,31 +141,34 @@ int main(int argc, char* argv[])
       bestMatch[0] = i;
       bestMatch[1] = values[i];
       std::cerr << "Best value: " << bestMatch[1] << std::endl;
-    }*/
+    }
     std::cerr << "Registration " << i+1 << " is done." << std::endl;
     //std::cout << "Registration time: " << float( clock () - begin_time_reg) / CLOCKS_PER_SEC << std::endl;
   }
 
   // Give the best mathcing slice and the associated metric value and reistration values
-  /*dStart[0] = 0;    dStart[1] = 0;    dStart[2] = sliceNumber - ((testNumber-1)/2) + bestMatch[0];
-  resliceImageVolume( &volume, dStart, dSize, &movingImage );
-  RegisterImage( &fixedImage, &movingImage, &registeredImage, &finalParameters, 1 ); // the 1 activated the image registration function
+  dStart[0] = 0;    dStart[1] = 0;    dStart[2] = sliceNumber - ((testNumber-1)/2) + bestMatch[0];
+  cropImageVolume( &volume, dStart, dSize, &movingImage );
+  registration.SetMovingImage( &movingImage );
+  registration.SetInitialMatrix( initialMatrix );
+  registration.RegisterImages();
+  registration.CreateRegisteredImage();
   std::cerr<< "Slice number " << sliceNumber << " matches best with slice number " << sliceNumber-((testNumber-1)/2)+bestMatch[0] << " with metric: " << bestMatch[1] << std::endl;
-  std::cerr<< "Set translation: " << translation[0] << ", " << translation[1] << " vs. found translation by registration: " << finalParameters[0] << ", " << finalParameters[1] << std::endl;
-*/
-  // Send the unregistered best matching slice and the registered best slice to Slicer
-  /*movingImage.ConvertITKtoIGTImage();
-  movingImage.imgMsg->SetDeviceName( "bestMatch" );
-  movingImage.imgMsg->Pack();
-  client1.socket->Send( movingImage.imgMsg->GetPackPointer(), movingImage.imgMsg->GetPackSize() );
-  registeredImage.ConvertITKtoIGTImage();
-  registeredImage.imgMsg->SetDeviceName( "registeredImage" );
-  registeredImage.imgMsg->Pack();
-  client1.socket->Send( registeredImage.imgMsg->GetPackPointer(), registeredImage.imgMsg->GetPackSize() );
+  //std::cerr<< "Set translation: " << translation[0] << ", " << translation[1] << " vs. found translation by registration: " << finalParameters[0] << ", " << finalParameters[1] << std::endl;
+
+  //Send the unregistered best matching slice and the registered best slice to Slicer
+  movingImage.ConvertITKtoIGTImage();
+  client1.imgMsg = movingImage.imgMsg;
+  client1.imgMsg->SetDeviceName( "bestMatch" );
+  client1.SendImage();
+  registration.registeredImage.ConvertITKtoIGTImage();
+  client1.imgMsg = registration.registeredImage.imgMsg;
+  client1.imgMsg->SetDeviceName( "registedMatch" );
+  client1.SendImage();
 
   // Close connection
   client1.socket->CloseSocket();
-*/
+
   std::cout << "Total running time: " << float( clock () - begin_time ) /  CLOCKS_PER_SEC << std::endl;
 
 }

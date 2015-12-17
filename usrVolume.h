@@ -1,3 +1,6 @@
+#ifndef VOLUME_H
+#define VOLUME_H
+
 #include "itkImageFileReader.h"
 #include "igtlImageMessage.h"
 #include <vtkNrrdReader.h>
@@ -31,3 +34,5 @@ class Volume
   int sizeVolume[3];
 
 };
+
+#endif //VOLUME_H

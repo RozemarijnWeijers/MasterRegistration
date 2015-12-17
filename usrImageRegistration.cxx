@@ -4,20 +4,20 @@ ImageRegistration::ImageRegistration()
 {
 
   // Create components registration function
-  metric = MetricType::New();
-  interpolator = InterpolatorType::New();
-  transform = TransformType::New();
-  optimizer = OptimizerType::New();
-  registration = RegistrationType::New();
+  this->metric = MetricType::New();
+  this->interpolator = InterpolatorType::New();
+  this->transform = TransformType::New();
+  this->optimizer = OptimizerType::New();
+  this->registration = RegistrationType::New();
   //initialMatrix =  // INITIALISEREN!!
 
-  resampler = ResampleFilterType::New();
+  this->resampler = ResampleFilterType::New();
 
   // Each component is now connected to the instance of the registration method
-  registration->SetMetric( metric );
-  registration->SetOptimizer( optimizer );
-  registration->SetTransform( transform );
-  registration->SetInterpolator( interpolator );
+  this->registration->SetMetric( this->metric );
+  this->registration->SetOptimizer( this->optimizer );
+  this->registration->SetTransform( this->transform );
+  this->registration->SetInterpolator( this->interpolator );
 
 }
 
@@ -28,7 +28,8 @@ ImageRegistration::~ImageRegistration()
 void ImageRegistration::SetFixedImage(Image* imagePointer)
 {
 
-  fixedImage = imagePointer;
+  this->fixedImage = imagePointer;
+  //this->registeredImage = imagePointer;
 
   return;
 
@@ -37,7 +38,7 @@ void ImageRegistration::SetFixedImage(Image* imagePointer)
 void ImageRegistration::SetMovingImage(Image* imagePointer)
 {
 
-  movingImage = imagePointer;
+  this->movingImage = imagePointer;
 
   return;
 
@@ -46,9 +47,9 @@ void ImageRegistration::SetMovingImage(Image* imagePointer)
 void ImageRegistration::SetInitialMatrix(double matrix[9])
 {
 
-  initialMatrix[0] = matrix[0]; initialMatrix[1] = matrix[1]; initialMatrix[2] = matrix[2];
-  initialMatrix[3] = matrix[3]; initialMatrix[4] = matrix[4]; initialMatrix[5] = matrix[5];
-  initialMatrix[6] = matrix[6]; initialMatrix[7] = matrix[7]; initialMatrix[8] = matrix[8];
+  this->initialMatrix[0] = matrix[0]; this->initialMatrix[1] = matrix[1]; this->initialMatrix[2] = matrix[2];
+  this->initialMatrix[3] = matrix[3]; this->initialMatrix[4] = matrix[4]; this->initialMatrix[5] = matrix[5];
+  this->initialMatrix[6] = matrix[6]; this->initialMatrix[7] = matrix[7]; this->initialMatrix[8] = matrix[8];
 
   return;
 
@@ -58,34 +59,34 @@ void ImageRegistration::RegisterImages()
 {
 
   // Set the registration inputs
-  registration->SetFixedImage( fixedImage->imageData );
-  registration->SetMovingImage( movingImage->imageData );
-  registration->SetFixedImageRegion( fixedImage->imageData->GetLargestPossibleRegion() );
+  this->registration->SetFixedImage( this->fixedImage->imageData );
+  this->registration->SetMovingImage( this->movingImage->imageData );
+  this->registration->SetFixedImageRegion( this->fixedImage->imageData->GetLargestPossibleRegion() );
 
   //  Initialize the transform
   ParametersType initialParameters( transform->GetNumberOfParameters() );
 
   // USE TRACKER DATA TO SET THE INITIAL PARAMETERS!!!!!!!!!!!!! KLOPT DIT?
   // rotation matrix
-  initialParameters[0] = initialMatrix[0];//1.0;
-  initialParameters[1] = initialMatrix[1];//0.0;
-  initialParameters[2] = initialMatrix[3];//0.0;
-  initialParameters[3] = initialMatrix[4];//1.0;
+  initialParameters[0] = this->initialMatrix[0];//1.0;
+  initialParameters[1] = this->initialMatrix[1];//0.0;
+  initialParameters[2] = this->initialMatrix[3];//0.0;
+  initialParameters[3] = this->initialMatrix[4];//1.0;
   // translation vector
-  initialParameters[4] = initialMatrix[2];//0.0;
-  initialParameters[5] = initialMatrix[5];//0.0;
+  initialParameters[4] = this->initialMatrix[2];//0.0;
+  initialParameters[5] = this->initialMatrix[5];//0.0;
 
-  registration->SetInitialTransformParameters( initialParameters );
+  this->registration->SetInitialTransformParameters( initialParameters );
 
-  optimizer->SetMaximumStepLength( .2 ); // If this is set too high, you will get a "itk::ERROR: MeanSquaresImageToImageMetric(0xa27ce70): Too many samples map outside moving image buffer: 1818 / 10000" error
-  optimizer->SetMinimumStepLength( 0.05 );
+  this->optimizer->SetMaximumStepLength( .2 ); // If this is set too high, you will get a "itk::ERROR: MeanSquaresImageToImageMetric(0xa27ce70): Too many samples map outside moving image buffer: 1818 / 10000" error
+  this->optimizer->SetMinimumStepLength( 0.05 );
 
   // Set a stopping criterion
-  optimizer->SetNumberOfIterations( 100 );
+  this->optimizer->SetNumberOfIterations( 100 );
 
   try
   {
-    registration->Update();
+    this->registration->Update();
   }
   catch( itk::ExceptionObject & err )
   {
@@ -95,53 +96,54 @@ void ImageRegistration::RegisterImages()
   }
 
   // Create registered version of moving image
-  if ( 0 == CreateRegisteredImage() )
+  /*if ( 0 == this->CreateRegisteredImage() )
   {
     std::cerr << "Registering Image failed" << std::endl;
-  }
+  }*/
 
   //  The result of the registration process is an array of parameters that defines the spatial transformation in an unique way. This final result is obtained using the \code{GetLastTransformParameters()} method.
-  ParametersType finalParameters = registration->GetLastTransformParameters();
-  registrationMatrix[0] = finalParameters[0];
-  registrationMatrix[1] = finalParameters[1];
-  registrationMatrix[3] = finalParameters[2];
-  registrationMatrix[4] = finalParameters[3];
-  registrationMatrix[2] = finalParameters[4];
-  registrationMatrix[5] = finalParameters[5];
+  ParametersType finalParameters = this->registration->GetLastTransformParameters();
+  this->registrationMatrix[0] = finalParameters[0];
+  this->registrationMatrix[1] = finalParameters[1];
+  this->registrationMatrix[3] = finalParameters[2];
+  this->registrationMatrix[4] = finalParameters[3];
+  this->registrationMatrix[2] = finalParameters[4];
+  this->registrationMatrix[5] = finalParameters[5];
 
-  metricValue = optimizer->GetValue();
+  this->metricValue = this->optimizer->GetValue();
 
   std::cout << "Final parameters 2D/2D-Registration: " << finalParameters << std::endl;
 
   //  The value of the image metric corresponding to the last set of parameters can be obtained with the \code{GetValue()} method of the optimizer.
-  std::cout << "Metric value: " << optimizer->GetValue() << std::endl;
+  //std::cout << "Metric value: " << this->optimizer->GetValue() << std::endl;
 
   return;
 
 }
 
-int ImageRegistration::CreateRegisteredImage()
+void ImageRegistration::CreateRegisteredImage()
 {
 
   // Set moving image as input
-  resampler->SetInput( movingImage->imageData );
+  this->resampler->SetInput( this->movingImage->imageData );
 
   // The Transform produced by the Registration method is passed into the resampling filter
-  resampler->SetTransform( registration->GetOutput()->Get() );
+  this->resampler->SetTransform( this->registration->GetOutput()->Get() );
 
   // Specifying parameters of the output image (default pixel value is set to gray in order to highlight the regions that are mapped outside of the moving image)
-  resampler->SetSize( fixedImage->imageData->GetLargestPossibleRegion().GetSize() );
-  resampler->SetOutputOrigin( fixedImage->imageData->GetOrigin() );
-  resampler->SetOutputSpacing( fixedImage->imageData->GetSpacing() );
-  resampler->SetOutputDirection( fixedImage->imageData->GetDirection() );
-  resampler->SetDefaultPixelValue( 0 );
-  resampler->Update();
+  this->resampler->SetSize( this->fixedImage->imageData->GetLargestPossibleRegion().GetSize() );
+  this->resampler->SetOutputOrigin( this->fixedImage->imageData->GetOrigin() );
+  this->resampler->SetOutputSpacing( this->fixedImage->imageData->GetSpacing() );
+  this->resampler->SetOutputDirection( this->fixedImage->imageData->GetDirection() );
+  this->resampler->SetDefaultPixelValue( 0 );
+  this->resampler->Update();
 
-  // Create registered ITKimage
-  Image* regim;
-  regim->imageData = resampler->GetOutput();
-  //registeredImage->imageData = regim.imageData;
+  // Create registered ITKimage'
+  this->registeredImage.imageData = this->resampler->GetOutput();
+  this->registeredImage.imageData->SetOrigin(this->fixedImage->imageData->GetOrigin());
+  this->registeredImage.imageData->SetSpacing(this->fixedImage->imageData->GetSpacing());
+  this->registeredImage.SetParametersFromITK( this->fixedImage->originImage[2], this->fixedImage->spacingImage[2] );
 
-  return 1;
+  return;
 
 }

@@ -28,19 +28,17 @@ class ImageRegistration
     void SetFixedImage( Image* );
     void SetMovingImage( Image* );
     void SetInitialMatrix( double[9] );
+    void CreateRegisteredImage();
 
     double registrationMatrix[9];
     double initialMatrix[9];
     double metricValue;
-    Image*  registeredImage;
+    Image  registeredImage;
 
     private:
 
-    int CreateRegisteredImage();
-
     Image*  fixedImage;
     Image*  movingImage;
-
     RegistrationType::Pointer   registration;
     TransformType::Pointer      transform;
     OptimizerType::Pointer      optimizer;
