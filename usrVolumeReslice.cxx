@@ -173,7 +173,7 @@ void VolumeReslice::CreateITKReslice()
   {
     std::cerr << "Volume hasn't been resliced yet" << std::endl;
   }
-
+  std::cerr << resliceOrigin[2] << std::endl;
   return;
 
 }

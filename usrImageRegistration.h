@@ -7,6 +7,7 @@
 #include "itkAffineTransform.h"
 #include <itkExtractImageFilter.h>
 #include "usrImage.h"
+#include "usrVolume.h"
 
 typedef itk::AffineTransform< double, 2 > TransformType;
 typedef itk::RegularStepGradientDescentOptimizer OptimizerType;

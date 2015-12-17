@@ -25,6 +25,7 @@ set( USR_SOURCES
 	usrVolume.cxx
 	usrImage.cxx
 	usrImageRegistration.cxx
+	usrVolumeRegistration.cxx
 	usrVolumeReslice.cxx
 	usrTransformMatrix.cxx
 	)
@@ -34,6 +35,7 @@ set( USR_HEADERS
 	usrVolume.h
 	usrImage.h
 	usrImageRegistration.h
+	usrVolumeRegistration.h
 	usrVolumeReslice.h
 	usrTransformMatrix.h
 	)
@@ -73,3 +75,15 @@ else( "${ITK_VERSION_MAJOR}" LESS 4 )
 endif( "${ITK_VERSION_MAJOR}" LESS 4 )
 target_link_Libraries(TestReslicedImageRegistration ${VTK_LIBRARIES})
 target_link_libraries(TestReslicedImageRegistration ${Glue})
+
+add_executable(TestCroppedVolumeRegistration TestCroppedVolumeRegistration.cxx)
+target_link_libraries(TestCroppedVolumeRegistration usrLib)
+TARGET_LINK_LIBRARIES(TestCroppedVolumeRegistration OpenIGTLink)
+if( "${ITK_VERSION_MAJOR}" LESS 4 )
+  target_link_libraries(TestCroppedVolumeRegistration ITKReview ${ITK_LIBRARIES})
+else( "${ITK_VERSION_MAJOR}" LESS 4 )
+  target_link_libraries(TestCroppedVolumeRegistration ${ITK_LIBRARIES})
+endif( "${ITK_VERSION_MAJOR}" LESS 4 )
+target_link_Libraries(TestCroppedVolumeRegistration ${VTK_LIBRARIES})
+target_link_libraries(TestCroppedVolumeRegistration ${Glue})
+

@@ -1,0 +1,50 @@
+#include "itkImage.h"
+#include "itkImageRegistrationMethod.h"
+#include "itkMeanSquaresImageToImageMetric.h"
+#include "itkRegularStepGradientDescentOptimizer.h"
+#include "itkResampleImageFilter.h"
+#include "itkRescaleIntensityImageFilter.h"
+#include "itkAffineTransform.h"
+#include <itkExtractImageFilter.h>
+#include "usrVolume.h"
+#include "usrVolume.h"
+
+typedef itk::AffineTransform< double, 3 > TransformType3D;
+typedef itk::RegularStepGradientDescentOptimizer OptimizerType3D;
+typedef itk::MeanSquaresImageToImageMetric< VolumeType, VolumeType > MetricType3D;
+typedef itk::LinearInterpolateImageFunction< VolumeType, double > InterpolatorType3D;
+typedef itk::ImageRegistrationMethod< VolumeType, VolumeType >    RegistrationType3D;
+typedef RegistrationType3D::ParametersType ParametersType3D;
+typedef itk::ResampleImageFilter< VolumeType, VolumeType > ResampleFilterType3D;
+
+class VolumeRegistration
+{
+
+    public:
+
+    VolumeRegistration();
+    ~VolumeRegistration();
+
+    void RegisterVolumes();
+    void SetFixedVolume( Volume* );
+    void SetMovingVolume( Volume* );
+    void SetInitialMatrix( double[16] );
+    void CreateRegisteredVolume();
+
+    double registrationMatrix[16];
+    double initialMatrix[16];
+    double metricValue;
+    Volume registeredVolume;
+
+    private:
+
+    Volume*  fixedVolume;
+    Volume*  movingVolume;
+    RegistrationType3D::Pointer   registration;
+    TransformType3D::Pointer      transform;
+    OptimizerType3D::Pointer      optimizer;
+    MetricType3D::Pointer         metric;
+    InterpolatorType3D::Pointer   interpolator;
+    ResampleFilterType3D::Pointer resampler;
+
+};

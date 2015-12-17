@@ -7,12 +7,13 @@
 int main(int argc, char* argv[]) // Why is this one slow? and why does it stop to recognize image messages after the first ca. 20?
 {
 
-  if (argc != 4) // check number of arguments
+  if (argc != 5) // check number of arguments
   {
     // If not correct, print usage
     std::cerr << "    <filenameVolume>    : Filename of Volume.nrrd"            << std::endl;
     std::cerr << "    <hostnameReceiver>  : IP or host name"                    << std::endl;
     std::cerr << "    <portReceiver>      : Port # (18944 default)"             << std::endl;
+    std::cerr << "    <SliceNumber>       : number"                             << std::endl;
     exit(0);
   }
 
@@ -37,7 +38,7 @@ int main(int argc, char* argv[]) // Why is this one slow? and why does it stop t
 
   // Test resliceImage volume, start point relative to volume coordinates (through which to slice)
   double       dStart[3];
-  dStart[0]=0; dStart[1]=0; dStart[2]=10;
+  dStart[0]=0; dStart[1]=0; dStart[2]=atoi( argv[4] );
   // Test matrix for reslicing axial
   static double transformMatrix[16] = {
             1, 0, 0, 0,
