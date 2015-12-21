@@ -5,6 +5,7 @@
 #include "igtlImageMessage.h"
 #include <vtkNrrdReader.h>
 #include "vtkSmartPointer.h"
+#include "usrTransformMatrix.h"
 
 
 typedef  unsigned char   PixelType;
@@ -21,7 +22,7 @@ class Volume
   void SetParametersFromITK();
   void ConvertITKtoIGTVolume();
   int LoadVolume( char* );
-  void UpdateVolumeTranform( double[16] );
+  void UpdateVolumeTranform( TransformMatrix* );
 
   VolumeType::Pointer volumeData;
   vtkSmartPointer<vtkNrrdReader> VTKReader;
@@ -33,6 +34,7 @@ class Volume
   private:
 
   int sizeVolume[3];
+  TransformMatrix volumeTransform;
 
 };
 

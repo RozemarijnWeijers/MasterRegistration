@@ -7,6 +7,7 @@ Volume::Volume()
   this->volumeData  = VolumeType::New();
   this->VTKReader = vtkSmartPointer<vtkNrrdReader>::New();
   this->imgMsg = igtl::ImageMessage::New();
+  //initialize transformMatrix
 
 }
 
@@ -23,6 +24,7 @@ void Volume::SetParametersFromITK()
   this->originVolume[0] = origin[0];      this->originVolume[1] = origin[1];        this->originVolume[2] = origin[2];
   VolumeType::SpacingType   spacing = volumeData->GetSpacing();
   this->spacingVolume[0] = spacing[0];    this->spacingVolume[1] = spacing[1];      this->spacingVolume[2] = spacing[2]; //laatste is 0
+  //set transformMatrix
 
   return;
 
@@ -46,6 +48,7 @@ void Volume::ConvertITKtoIGTVolume()
   this->imgMsg->SetScalarType( scalarType );
   this->imgMsg->SetOrigin( originIGT );
   this->imgMsg->AllocateScalars();
+  //convert transformMatrix
 
   // Set copy image data into ITK image
   memcpy( this->imgMsg->GetScalarPointer(), this->volumeData->GetBufferPointer(), this->imgMsg->GetImageSize() );
@@ -88,6 +91,6 @@ int Volume::LoadVolume( char* filename )
 
 }
 
-void Volume::UpdateVolumeTranform( double transform[16] )
+void Volume::UpdateVolumeTranform( TransformMatrix )
 {
 }
