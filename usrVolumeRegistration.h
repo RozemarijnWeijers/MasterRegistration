@@ -1,21 +1,22 @@
 #include "itkImage.h"
 #include "itkImageRegistrationMethod.h"
 #include "itkMeanSquaresImageToImageMetric.h"
-#include "itkRegularStepGradientDescentOptimizer.h"
+#include "itkVersorRigid3DTransformOptimizer.h"
 #include "itkResampleImageFilter.h"
 #include "itkRescaleIntensityImageFilter.h"
-#include "itkAffineTransform.h"
 #include <itkExtractImageFilter.h>
+#include "itkVersorRigid3DTransform.h"
+#include "itkCenteredTransformInitializer.h"
 #include "usrVolume.h"
 #include "usrVolume.h"
 
-typedef itk::AffineTransform< double, 3 > TransformType3D;
-typedef itk::RegularStepGradientDescentOptimizer OptimizerType3D;
-typedef itk::MeanSquaresImageToImageMetric< VolumeType, VolumeType > MetricType3D;
-typedef itk::LinearInterpolateImageFunction< VolumeType, double > InterpolatorType3D;
-typedef itk::ImageRegistrationMethod< VolumeType, VolumeType >    RegistrationType3D;
-typedef RegistrationType3D::ParametersType ParametersType3D;
-typedef itk::ResampleImageFilter< VolumeType, VolumeType > ResampleFilterType3D;
+typedef itk::ResampleImageFilter< VolumeType, VolumeType >                    ResampleFilterType3D;
+typedef itk::VersorRigid3DTransform< double >                                 TransformType3D;
+typedef itk::VersorRigid3DTransformOptimizer                                  OptimizerType3D;
+typedef itk::MeanSquaresImageToImageMetric< VolumeType, VolumeType >          MetricType3D;
+typedef itk:: LinearInterpolateImageFunction< VolumeType, double >            InterpolatorType3D;
+typedef itk::ImageRegistrationMethod< VolumeType, VolumeType >                RegistrationType3D;
+typedef RegistrationType3D::ParametersType                                    ParametersType3D;
 
 class VolumeRegistration
 {

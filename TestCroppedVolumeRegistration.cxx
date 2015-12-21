@@ -86,7 +86,7 @@ int main(int argc, char* argv[])
   int       translation[2];     translation[0] = 0;                 translation[1] = 0; // Optional
   int       dStart[3];          dStart[0] = translation[0];         dStart[1] = translation[1];        dStart[2] =sliceNumber; // slice number "slicenumber" without the 5 most left pixels (so translated to the left)
   VolumeType::SizeType          size = volume.volumeData->GetLargestPossibleRegion().GetSize();
-  int       dSize[3];           dSize[0] = size[0]-translation[0];  dSize[1] = size[1]-translation[1];  dSize[2] = 4;// Note the switch in axis for the translation
+  int       dSize[3];           dSize[0] = size[0]-translation[0];  dSize[1] = size[1]-translation[1];  dSize[2] = 1;// Note the switch in axis for the translation
 
   // Get (part of) a slice of the volume (by cropping) and set it as fixed image for registration
   cropVolume( &volume, dStart, dSize, &fixedVolume );
@@ -116,7 +116,8 @@ int main(int argc, char* argv[])
     const clock_t begin_time_reg = clock();
 
     // Set parameters for the reslice to match with the fixed image
-    dStart[0] = 0;  dStart[1] = 0;  dStart[2] = sliceNumber;// - ((testNumber-1)/2)+i;
+    dStart[0] = 0;  dStart[1] = 0;  dStart[2] = sliceNumber - ((testNumber-1)/2)+i;
+    int       dSize[3];           dSize[0] = size[0]-translation[0];  dSize[1] = size[1]-translation[1];  dSize[2] = 6;
 
     // Get the new reslice of the volume (by cropping) and set it as the moving image for registration
     cropVolume( &volume, dStart, dSize, &movingVolume );

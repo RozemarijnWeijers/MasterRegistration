@@ -87,3 +87,7 @@ int Volume::LoadVolume( char* filename )
   return 1;
 
 }
+
+void Volume::UpdateVolumeTranform( double transform[16] )
+{
+}

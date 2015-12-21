@@ -21,6 +21,7 @@ class Volume
   void SetParametersFromITK();
   void ConvertITKtoIGTVolume();
   int LoadVolume( char* );
+  void UpdateVolumeTranform( double[16] );
 
   VolumeType::Pointer volumeData;
   vtkSmartPointer<vtkNrrdReader> VTKReader;

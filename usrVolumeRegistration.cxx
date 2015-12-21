@@ -64,28 +64,40 @@ void VolumeRegistration::RegisterVolumes()
   this->registration->SetFixedImageRegion( this->fixedVolume->volumeData->GetLargestPossibleRegion() );
 
   //  Initialize the transform
-  ParametersType3D initialParameters( transform->GetNumberOfParameters() );
+  typedef itk::CenteredTransformInitializer< TransformType3D, VolumeType, VolumeType >  TransformInitializerType;
+  TransformInitializerType::Pointer initializer = TransformInitializerType::New();
+  initializer->SetTransform(   transform );
+  initializer->SetFixedImage(  this->fixedVolume->volumeData );
+  initializer->SetMovingImage( this->movingVolume->volumeData );
+  initializer->MomentsOn();
+  initializer->InitializeTransform();
 
-  // USE TRACKER DATA TO SET THE INITIAL PARAMETERS!!!!!!!!!!!!! KLOPT DIT?
-  // rotation matrix
-  initialParameters[0] = this->initialMatrix[0];//1.0;
-  initialParameters[1] = this->initialMatrix[1];//0.0;
-  initialParameters[2] = this->initialMatrix[2];//0.0;
-  initialParameters[3] = this->initialMatrix[4];//1.0;
-  initialParameters[3] = this->initialMatrix[5];//1.0;
-  initialParameters[3] = this->initialMatrix[6];//1.0;
-  initialParameters[3] = this->initialMatrix[8];//1.0;
-  initialParameters[3] = this->initialMatrix[9];//1.0;
-  initialParameters[3] = this->initialMatrix[10];//1.0;
-  // translation vector
-  initialParameters[4] = this->initialMatrix[3];//0.0;
-  initialParameters[5] = this->initialMatrix[7];//0.0;
-  initialParameters[3] = this->initialMatrix[11];//1.0;
+  typedef TransformType3D::VersorType  VersorType;
+  typedef VersorType::VectorType     VectorType;
+  VersorType     rotation;
+  VectorType     axis;
+  axis[0] = 0.0;
+  axis[1] = 0.0;
+  axis[2] = 1.0;
+  const double angle = 0;
+  rotation.Set(  axis, angle  );
+  transform->SetRotation( rotation );
 
-  this->registration->SetInitialTransformParameters( initialParameters );
+  this->registration->SetInitialTransformParameters( transform->GetParameters() );
 
-  this->optimizer->SetMaximumStepLength( .2 ); // If this is set too high, you will get a "itk::ERROR: MeanSquaresVolumeToVolumeMetric(0xa27ce70): Too many samples map outside moving Volume buffer: 1818 / 10000" error
-  this->optimizer->SetMinimumStepLength( 0.05 );
+  typedef OptimizerType3D::ScalesType       OptimizerScalesType;
+  OptimizerScalesType optimizerScales( transform->GetNumberOfParameters() );
+  const double translationScale = 1.0 / 1000.0;
+  optimizerScales[0] = 1.0;
+  optimizerScales[1] = 1.0;
+  optimizerScales[2] = 1.0;
+  optimizerScales[3] = translationScale;
+  optimizerScales[4] = translationScale;
+  optimizerScales[5] = translationScale;
+  optimizer->SetScales( optimizerScales );
+  optimizer->SetMaximumStepLength( 0.2000  );
+  optimizer->SetMinimumStepLength( 0.0001 );
+  optimizer->SetNumberOfIterations( 200 );
 
   // Set a stopping criterion
   this->optimizer->SetNumberOfIterations( 100 );
@@ -108,17 +120,31 @@ void VolumeRegistration::RegisterVolumes()
   }*/
 
   //  The result of the registration process is an array of parameters that defines the spatial transformation in an unique way. This final result is obtained using the \code{GetLastTransformParameters()} method.
-  ParametersType3D finalParameters = this->registration->GetLastTransformParameters();
-  this->registrationMatrix[0] = finalParameters[0];
-  this->registrationMatrix[1] = finalParameters[1];
-  this->registrationMatrix[3] = finalParameters[2];
-  this->registrationMatrix[4] = finalParameters[3];
-  this->registrationMatrix[2] = finalParameters[4];
-  this->registrationMatrix[5] = finalParameters[5];
+  OptimizerType3D::ParametersType finalParameters = registration->GetLastTransformParameters();
+  const double versorX              = finalParameters[0];
+  const double versorY              = finalParameters[1];
+  const double versorZ              = finalParameters[2];
+  const double finalTranslationX    = finalParameters[3];
+  const double finalTranslationY    = finalParameters[4];
+  const double finalTranslationZ    = finalParameters[5];
+  const unsigned int numberOfIterations = optimizer->GetCurrentIteration();
+  const double bestValue = optimizer->GetValue();
 
-  this->metricValue = this->optimizer->GetValue();
+  std::cout << std::endl << std::endl;
+  std::cout << "Result = " << std::endl;
+  std::cout << " versor X      = " << versorX  << std::endl;
+  std::cout << " versor Y      = " << versorY  << std::endl;
+  std::cout << " versor Z      = " << versorZ  << std::endl;
+  std::cout << " Translation X = " << finalTranslationX  << std::endl;
+  std::cout << " Translation Y = " << finalTranslationY  << std::endl;
+  std::cout << " Translation Z = " << finalTranslationZ  << std::endl;
+  std::cout << " Iterations    = " << numberOfIterations << std::endl;
+  std::cout << " Metric value  = " << bestValue          << std::endl;
 
-  std::cout << "Final parameters 2D/2D-Registration: " << finalParameters << std::endl;
+
+  //his->metricValue = this->optimizer->GetValue();
+
+  //std::cout << "Final parameters 2D/2D-Registration: " << finalParameters << std::endl;
 
   //  The value of the Volume metric corresponding to the last set of parameters can be obtained with the \code{GetValue()} method of the optimizer.
   //std::cout << "Metric value: " << this->optimizer->GetValue() << std::endl;
