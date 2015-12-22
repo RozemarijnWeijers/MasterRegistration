@@ -3,6 +3,7 @@
 
 #include "itkImage.h"
 #include "igtlImageMessage.h"
+#include "usrTransformMatrix.h"
 
 typedef  unsigned char PixelType;
 typedef  itk::Image< PixelType, 2 > ImageType;
@@ -18,18 +19,19 @@ class Image
   int   ConvertIGTtoITKImage();
   int   ConvertITKtoIGTImage();
   void  SetParametersFromIGT();
-  void  SetParametersFromITK( double, double );
+  void  SetParametersFromITK( double, double, TransformMatrix );
 
   ImageType::Pointer            imageData;
   igtl::ImageMessage::Pointer   imgMsg;
+  TransformMatrix   imageMatrix;   // image origin and orientation matrix
 
   float             originImage[3];
   float             spacingImage[3];
 
-  protected:
+  //private:
 
   int               sizeImage[3];
-  igtl::Matrix4x4   matrixImage;   // image origin and orientation matrix
+
 
 };
 

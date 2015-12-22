@@ -20,6 +20,9 @@ endif()
 find_package(OpenIGTLink REQUIRED)
 include(${OpenIGTLink_USE_FILE})
 
+find_package(Armadillo REQUIRED)
+include_directories(${ARMADILLO_INCLUDE_DIRS})
+
 set( USR_SOURCES
 	usrClientIGT.cxx
 	usrVolume.cxx
@@ -53,6 +56,7 @@ else( "${ITK_VERSION_MAJOR}" LESS 4 )
 endif( "${ITK_VERSION_MAJOR}" LESS 4 )
 target_link_Libraries(TestIGTImageRegistration ${VTK_LIBRARIES})
 target_link_libraries(TestIGTImageRegistration ${Glue})
+target_link_libraries(TestIGTImageRegistration ${ARMADILLO_LIBRARIES})
 
 add_executable(TestCroppedImageRegistration TestCroppedImageRegistration.cxx)
 target_link_libraries(TestCroppedImageRegistration usrLib)
@@ -64,6 +68,7 @@ else( "${ITK_VERSION_MAJOR}" LESS 4 )
 endif( "${ITK_VERSION_MAJOR}" LESS 4 )
 target_link_Libraries(TestCroppedImageRegistration ${VTK_LIBRARIES})
 target_link_libraries(TestCroppedImageRegistration ${Glue})
+target_link_libraries(TestCroppedImageRegistration ${ARMADILLO_LIBRARIES})
 
 add_executable(TestReslicedImageRegistration TestReslicedImageRegistration.cxx)
 target_link_libraries(TestReslicedImageRegistration usrLib)
@@ -75,6 +80,7 @@ else( "${ITK_VERSION_MAJOR}" LESS 4 )
 endif( "${ITK_VERSION_MAJOR}" LESS 4 )
 target_link_Libraries(TestReslicedImageRegistration ${VTK_LIBRARIES})
 target_link_libraries(TestReslicedImageRegistration ${Glue})
+target_link_libraries(TestReslicedImageRegistration ${ARMADILLO_LIBRARIES})
 
 add_executable(TestCroppedVolumeRegistration TestCroppedVolumeRegistration.cxx)
 target_link_libraries(TestCroppedVolumeRegistration usrLib)
@@ -86,4 +92,5 @@ else( "${ITK_VERSION_MAJOR}" LESS 4 )
 endif( "${ITK_VERSION_MAJOR}" LESS 4 )
 target_link_Libraries(TestCroppedVolumeRegistration ${VTK_LIBRARIES})
 target_link_libraries(TestCroppedVolumeRegistration ${Glue})
+target_link_libraries(TestCroppedVolumeRegistration ${ARMADILLO_LIBRARIES})
 

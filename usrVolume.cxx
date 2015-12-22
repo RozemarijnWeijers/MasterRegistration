@@ -91,6 +91,6 @@ int Volume::LoadVolume( char* filename )
 
 }
 
-void Volume::UpdateVolumeTranform( TransformMatrix )
+void Volume::UpdateVolumeTranform( TransformMatrix* )
 {
 }

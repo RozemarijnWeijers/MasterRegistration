@@ -142,7 +142,7 @@ void ImageRegistration::CreateRegisteredImage()
   this->registeredImage.imageData = this->resampler->GetOutput();
   this->registeredImage.imageData->SetOrigin(this->fixedImage->imageData->GetOrigin());
   this->registeredImage.imageData->SetSpacing(this->fixedImage->imageData->GetSpacing());
-  this->registeredImage.SetParametersFromITK( this->fixedImage->originImage[2], this->fixedImage->spacingImage[2] );
+  this->registeredImage.SetParametersFromITK( this->fixedImage->originImage[2], this->fixedImage->spacingImage[2], this->fixedImage->imageMatrix );
 
   return;
 

@@ -18,7 +18,7 @@ void cropImageVolume( Volume* volume, int dStart[3], int dsize[2], Image* sliceI
   std::cout << "Desired Region: " << desiredRegion << std::endl;
 
   // Create cropping/reslice
-  FilterType::Pointer           filter = FilterType::New();
+  FilterType::Pointer filter = FilterType::New();
   filter->SetExtractionRegion( desiredRegion );
   filter->SetInput( volume->volumeData );
   filter->SetDirectionCollapseToIdentity(); // This is required.
@@ -28,7 +28,6 @@ void cropImageVolume( Volume* volume, int dStart[3], int dsize[2], Image* sliceI
   sliceImage->imageData = filter->GetOutput();
 
   // Get and set parameters for reslices image    // spacing (mm/pixel)
-
   VolumeType::PointType         origin;
   double                        originSliceImage[3];
   double                        spacingSliceImage[3];
@@ -40,7 +39,12 @@ void cropImageVolume( Volume* volume, int dStart[3], int dsize[2], Image* sliceI
 
   sliceImage->imageData->SetSpacing( spacing );
   sliceImage->imageData->SetOrigin( originSliceImage );
-  sliceImage->SetParametersFromITK( originSliceImage[2], spacingSliceImage[2] );
+  int tempSize[3];
+  tempSize[0] = dsize[0]; tempSize[1] = dsize[1]; tempSize[2] = 1;
+  sliceImage->imageMatrix.SetDimensionsForIGTMatrix( tempSize );
+  sliceImage->imageMatrix.SetSpacingForIGTMatrix( spacing );
+  sliceImage->imageMatrix.SetOriginInTransform( originSliceImage );
+  sliceImage->SetParametersFromITK( originSliceImage[2], spacingSliceImage[2], sliceImage->imageMatrix );
 
   return;
 
@@ -85,6 +89,11 @@ int main(int argc, char* argv[])
   int       translation[2];     translation[0] = 0;                 translation[1] = 0; // Optional
   int       dStart[3];          dStart[0] = translation[0];         dStart[1] = translation[1];        dStart[2] =sliceNumber; // slice number "slicenumber" without the 5 most left pixels (so translated to the left)
   VolumeType::SizeType          size = volume.volumeData->GetLargestPossibleRegion().GetSize();
+  if ( sliceNumber > size[2] )
+  {
+    std::cout << "sliceNumber is out of range" << std::endl;
+    //exit;
+  }
   int       dSize[2];           dSize[0] = size[0]-translation[0];  dSize[1] = size[1]-translation[1]; // Note the switch in axis for the translation
 
   // Get (part of) a slice of the volume (by cropping) and set it as fixed image for registration
@@ -92,15 +101,12 @@ int main(int argc, char* argv[])
 
   // Send the fixed image to Slicer
   fixedImage.ConvertITKtoIGTImage();
-  float spac[3];
-  fixedImage.imgMsg->GetSpacing(spac);
-  std::cerr<< spac[0]<<std::endl;
   client1.imgMsg = fixedImage.imgMsg;
   client1.imgMsg->SetDeviceName( "imageSlice" );
   client1.SendImage();
 
   // Start registration of the resliced images with other resliced images in the area around it (5 slices before and 5 after) to find the best match
-  int               testNumber = 11;
+  int               testNumber = 3;
   double            values[testNumber];
   double            bestMatch[2];
   ParametersType    finalParameters;
@@ -117,33 +123,40 @@ int main(int argc, char* argv[])
     // Set parameters for the reslice to match with the fixed image
     dStart[0] = 0;  dStart[1] = 0;  dStart[2] = sliceNumber - ((testNumber-1)/2)+i;
 
-    // Get the new reslice of the volume (by cropping) and set it as the moving image for registration
-    cropImageVolume( &volume, dStart, dSize, &movingImage );
-
-    // Register the moving and the fixed image and save th emetric values to find the best match
-    registration.SetMovingImage( &movingImage );
-    registration.SetInitialMatrix( initialMatrix );
-    registration.RegisterImages();
-    //registration.CreateRegisteredImage();
-    values[i] = registration.metricValue;
-
-    if ( i > 0 )
+    if ( dStart < 0 )
     {
-      if( values[i] < bestMatch[1] )
-      {
-        bestMatch[0] = i;
-        bestMatch[1] = values[i];
-        std::cerr << "New best value: " << bestMatch[1] << std::endl;
-      }
+      std::cout << "sliceNumber out of range" << std::endl;
     }
     else
     {
-      bestMatch[0] = i;
-      bestMatch[1] = values[i];
-      std::cerr << "Best value: " << bestMatch[1] << std::endl;
+      // Get the new reslice of the volume (by cropping) and set it as the moving image for registration
+      cropImageVolume( &volume, dStart, dSize, &movingImage );
+
+      // Register the moving and the fixed image and save th emetric values to find the best match
+      registration.SetMovingImage( &movingImage );
+      registration.SetInitialMatrix( initialMatrix );
+      registration.RegisterImages();
+      //registration.CreateRegisteredImage();
+      values[i] = registration.metricValue;
+
+      if ( i > 0 )
+      {
+        if( values[i] < bestMatch[1] )
+        {
+          bestMatch[0] = i;
+          bestMatch[1] = values[i];
+          std::cerr << "New best value: " << bestMatch[1] << std::endl;
+        }
+      }
+      else
+      {
+        bestMatch[0] = i;
+        bestMatch[1] = values[i];
+        std::cerr << "Best value: " << bestMatch[1] << std::endl;
+      }
+      std::cerr << "Registration " << i+1 << " is done." << std::endl;
+      //std::cout << "Registration time: " << float( clock () - begin_time_reg) / CLOCKS_PER_SEC << std::endl;
     }
-    std::cerr << "Registration " << i+1 << " is done." << std::endl;
-    //std::cout << "Registration time: " << float( clock () - begin_time_reg) / CLOCKS_PER_SEC << std::endl;
   }
 
   // Give the best mathcing slice and the associated metric value and reistration values
@@ -157,6 +170,7 @@ int main(int argc, char* argv[])
   //std::cerr<< "Set translation: " << translation[0] << ", " << translation[1] << " vs. found translation by registration: " << finalParameters[0] << ", " << finalParameters[1] << std::endl;
 
   //Send the unregistered best matching slice and the registered best slice to Slicer
+  //movingImage.SetParametersFromITK()
   movingImage.ConvertITKtoIGTImage();
   client1.imgMsg = movingImage.imgMsg;
   client1.imgMsg->SetDeviceName( "bestMatch" );
