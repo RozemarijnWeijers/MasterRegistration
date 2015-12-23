@@ -28,8 +28,9 @@ class ImageRegistration
     void RegisterImages();
     void SetFixedImage( Image* );
     void SetMovingImage( Image* );
-    void SetInitialMatrix( double[9] );
+    void SetInitialMatrix( TransformMatrix );
     void CreateRegisteredImage();
+    TransformMatrix GetRegistrationMatrix();
 
     double registrationMatrix[9];
     double initialMatrix[9];

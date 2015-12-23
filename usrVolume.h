@@ -19,7 +19,7 @@ class Volume
   Volume();
   ~Volume();
 
-  void SetParametersFromITK();
+  void SetParametersFromITK();// TransformMatrix );
   void ConvertITKtoIGTVolume();
   int LoadVolume( char* );
   void UpdateVolumeTranform( TransformMatrix* );
@@ -27,14 +27,11 @@ class Volume
   VolumeType::Pointer volumeData;
   vtkSmartPointer<vtkNrrdReader> VTKReader;
   igtl::ImageMessage::Pointer imgMsg;
+  TransformMatrix volumeMatrix;
 
   float originVolume[3];
   float spacingVolume[3];
-
-  private:
-
   int sizeVolume[3];
-  TransformMatrix volumeTransform;
 
 };
 

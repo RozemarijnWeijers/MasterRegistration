@@ -79,18 +79,18 @@ int Image::ConvertITKtoIGTImage()
 
   // SetParametersFromITK( origin3th, spacing3th );
   // Convert the origin (IGT uses the centre as origin instead of the corner) (2D information -> 3D)
-  float originIGT[3];
+  /*float originIGT[3];
   for ( int i=0; i<3; i++)
   {
     originIGT[i] = this->originImage[i]+((this->sizeImage[i]-1)*this->spacingImage[i]/2);
-  }
+  }*/
 
   int scalarType = igtl::ImageMessage::TYPE_UINT8;
 
   this->imgMsg->SetDimensions( this->sizeImage );
   this->imgMsg->SetSpacing( this->spacingImage );
   this->imgMsg->SetScalarType( scalarType );
-  this->imgMsg->SetOrigin( originIGT );
+  //this->imgMsg->SetOrigin( originIGT );
   this->imgMsg->SetMatrix( this->imageMatrix.IGTMatrix );
   this->imgMsg->AllocateScalars();
 
@@ -98,7 +98,6 @@ int Image::ConvertITKtoIGTImage()
   memcpy( this->imgMsg->GetScalarPointer(), this->imageData->GetBufferPointer(), this->imgMsg->GetSubVolumeImageSize() );
   // Pack (serialize) and send
   this->imgMsg->Pack();
-  std::cerr<< "reslicing is done" << std::endl;
 
   return 1;
 

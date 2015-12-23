@@ -29,7 +29,7 @@ void cropImageVolume( Volume* volume, int dStart[3], int dsize[2], Image* sliceI
 
   // Get and set parameters for reslices image    // spacing (mm/pixel)
   VolumeType::PointType         origin;
-  double                        originSliceImage[3];
+  float                         originSliceImage[3];
   double                        spacingSliceImage[3];
 
   float* spacing = volume->spacingVolume;
@@ -110,8 +110,8 @@ int main(int argc, char* argv[])
   double            values[testNumber];
   double            bestMatch[2];
   ParametersType    finalParameters;
-  double            initialMatrix[9] = {1, 0, 0, 0, 1, 0, 0, 0, 1};
-
+  //double            initialMatrix[16] = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
+  TransformMatrix   initialMatrix;
   ImageRegistration registration;
   registration.SetFixedImage( &fixedImage );
 

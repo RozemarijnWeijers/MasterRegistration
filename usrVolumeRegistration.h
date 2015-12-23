@@ -8,7 +8,7 @@
 #include "itkVersorRigid3DTransform.h"
 #include "itkCenteredTransformInitializer.h"
 #include "usrVolume.h"
-#include "usrVolume.h"
+#include "usrTransformMatrix.h"
 
 typedef itk::ResampleImageFilter< VolumeType, VolumeType >                    ResampleFilterType3D;
 typedef itk::VersorRigid3DTransform< double >                                 TransformType3D;
@@ -29,8 +29,9 @@ class VolumeRegistration
     void RegisterVolumes();
     void SetFixedVolume( Volume* );
     void SetMovingVolume( Volume* );
-    void SetInitialMatrix( double[16] );
+    void SetInitialMatrix( TransformMatrix );
     void CreateRegisteredVolume();
+    TransformMatrix GetRegistrationMatrix();
 
     double registrationMatrix[16];
     double initialMatrix[16];

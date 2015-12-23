@@ -15,16 +15,26 @@ Volume::~Volume()
 {
 }
 
-void Volume::SetParametersFromITK()
+void Volume::SetParametersFromITK()// TransformMatrix ITKimageMatrix )
 {
 
   VolumeType::SizeType      size = volumeData->GetLargestPossibleRegion().GetSize();
-  this->sizeVolume[0] = size[0];          this->sizeVolume[1] = size[1];            this->sizeVolume[2] = size[2];
   VolumeType::PointType     origin = volumeData->GetOrigin();
-  this->originVolume[0] = origin[0];      this->originVolume[1] = origin[1];        this->originVolume[2] = origin[2];
   VolumeType::SpacingType   spacing = volumeData->GetSpacing();
-  this->spacingVolume[0] = spacing[0];    this->spacingVolume[1] = spacing[1];      this->spacingVolume[2] = spacing[2]; //laatste is 0
-  //set transformMatrix
+  this->sizeVolume[0] = size[0];          this->sizeVolume[1] = size[1];            this->sizeVolume[2] = size[2];
+  this->originVolume[0] = origin[0];      this->originVolume[1] = origin[1];        this->originVolume[2] = origin[2];
+  this->spacingVolume[0] = spacing[0];    this->spacingVolume[1] = spacing[1];      this->spacingVolume[2] = spacing[2];
+
+  this->volumeMatrix.SetDimensionsForIGTMatrix( this->sizeVolume );
+  this->volumeMatrix.SetSpacingForIGTMatrix( this->spacingVolume );
+
+  VolumeType::DirectionType direction = volumeData->GetDirection();
+  double dir[9];
+  dir[0] = direction[0][0]; dir[1] = direction[0][1]; dir[2] = direction[0][2];
+  dir[3] = direction[1][0]; dir[4] = direction[1][1]; dir[5] = direction[1][2];
+  dir[6] = direction[2][0]; dir[7] = direction[2][1]; dir[8] = direction[2][2];
+  this->volumeMatrix.SetDirectionInTransform( dir );
+  this->volumeMatrix.SetOriginInTransform( this->originVolume );
 
   return;
 
@@ -34,11 +44,11 @@ void Volume::ConvertITKtoIGTVolume()
 {
 
   // convert the origin (IGT uses the centre as origin instead of the corner)
-  float originIGT[3];
+  /*float originIGT[3];
   for ( int i=0; i<3; i++)
   {
     originIGT[i] = this->originVolume[i]+((this->sizeVolume[i]-1)*this->spacingVolume[i]/2);
-  }
+  }*/
 
   int scalarType = igtl::ImageMessage::TYPE_UINT8;
 
@@ -46,7 +56,8 @@ void Volume::ConvertITKtoIGTVolume()
   this->imgMsg->SetDimensions( this->sizeVolume );
   this->imgMsg->SetSpacing( this->spacingVolume );
   this->imgMsg->SetScalarType( scalarType );
-  this->imgMsg->SetOrigin( originIGT );
+  //this->imgMsg->SetOrigin( originIGT );
+  this->imgMsg->SetMatrix( this->volumeMatrix.IGTMatrix );
   this->imgMsg->AllocateScalars();
   //convert transformMatrix
 
