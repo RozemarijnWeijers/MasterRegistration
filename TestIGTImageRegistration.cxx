@@ -1,4 +1,10 @@
-#include "itkImage.h"
+#include "usrClientIGT.h"
+#include "usrVolume.h"
+#include "usrImage.h"
+#include "usrImageRegistration.h"
+#include "usrVolumeReslice.h"
+
+/*#include "itkImage.h"
 #include "itkImageRegistrationMethod.h"
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
@@ -32,12 +38,6 @@
 #include "igtlStatusMessage.h"
 #include <igtl_util.h>
 
-#include "usrClientIGT.h"
-#include "usrVolume.h"
-#include "usrImage.h"
-#include "usrImageRegistration.h"
-#include "usrVolumeReslice.h"
-
 typedef  unsigned char   PixelType;
 typedef  itk::Image< PixelType, 2 >  ImageType;
 typedef  itk::Image< PixelType, 3 >  VolumeType;
@@ -57,8 +57,7 @@ typedef itk::ImageFileReader<VolumeType> FileReaderType;
 typedef itk::ExtractImageFilter< VolumeType, ImageType > FilterType;
 typedef itk::ResampleImageFilter< ImageType, ImageType > ResampleFilterType;
 typedef itk::VTKImageToImageFilter<ImageType> VTKImageToImageType;
-typedef RegistrationType::ParametersType ParametersType;
-
+typedef RegistrationType::ParametersType ParametersType;*/
 
 /*class Images
 {

@@ -173,4 +173,3 @@ int main(int argc, char* argv[]) // Why is this one slow? and why does it stop t
   clientIGT2.socket->CloseSocket();
   clientIGT3.socket->CloseSocket();*/
 }
-

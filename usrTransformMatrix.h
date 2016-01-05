@@ -3,6 +3,9 @@
 
 #include "igtlImageMessage.h"
 #include <armadillo>
+#include <math.h>
+
+#define PI 3.14159265
 
 using namespace arma;
 
@@ -20,6 +23,8 @@ class TransformMatrix
   void SetDirectionInTransform( double[9] );
   void SetDimensionsForIGTMatrix( int[3] );
   void SetSpacingForIGTMatrix( float[3] );
+  void SetDirectionFrom3Angles( double[3] );
+  void SetIGTTransformFromMat( mat );
 
   igtl::Matrix4x4 IGTMatrix;
 
@@ -28,8 +33,6 @@ class TransformMatrix
   float spacing[3];
 
   private:
-
-  void SetIGTTransformFromMat( mat );
 
   bool spacingSetCheck;
   bool dimensionsSetCheck;

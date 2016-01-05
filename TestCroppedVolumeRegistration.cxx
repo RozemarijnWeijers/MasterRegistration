@@ -5,48 +5,6 @@
 #include "usrVolumeReslice.h"
 #include "usrVolumeRegistration.h"
 
-void cropVolume( Volume* volume, int dStart[3], int dsize[3], Volume* sliceVolume )
-{
-
-  typedef itk::ExtractImageFilter< VolumeType, VolumeType > FilterType;
-  // Set parameters for desired image (reslice/ crop)
-  VolumeType::IndexType         desiredStart;
-  VolumeType::SizeType          desiredSize ;
-  desiredStart[0] = dStart[0];  desiredStart[1] = dStart[1];    desiredStart[2] = dStart[2];
-  desiredSize[0] = dsize[0];    desiredSize[1] = dsize[1];      desiredSize[2] = dsize[2];
-
-  VolumeType::RegionType        desiredRegion( desiredStart, desiredSize );
-  std::cout << "Desired Region: " << desiredRegion << std::endl;
-
-  // Create cropping/reslice
-  FilterType::Pointer           filter = FilterType::New();
-  filter->SetExtractionRegion( desiredRegion );
-  filter->SetInput( volume->volumeData );
-  filter->SetDirectionCollapseToIdentity(); // This is required.
-  filter->Update();
-
-  // Set resliced image to ITK image
-  sliceVolume->volumeData = filter->GetOutput();
-
-  // Get and set parameters for reslices image    // spacing (mm/pixel)
-
-  VolumeType::PointType         origin;
-  double                        originsliceVolume[3];
-  double                        spacingsliceVolume[3];
-
-  float* spacing = volume->spacingVolume;
-  float* start1 = volume->originVolume;
-  spacingsliceVolume[0] = spacing[0]; spacingsliceVolume[1] = spacing[1]; spacingsliceVolume[2] = spacing[2];
-  originsliceVolume[0] = start1[0] + dStart[0]; originsliceVolume[1] = start1[1] + dStart[1];   originsliceVolume[2] = start1[2] + dStart[2];
-
-  sliceVolume->volumeData->SetSpacing( spacing );
-  sliceVolume->volumeData->SetOrigin( originsliceVolume );
-  sliceVolume->SetParametersFromITK();
-
-  return;
-
-}
-
 int main(int argc, char* argv[])
 {
   // Measure running time
@@ -64,7 +22,7 @@ int main(int argc, char* argv[])
 
   // Load volume data (NRRD file)
   char*     file = argv[1];
-  Volume   volume;
+  Volume    volume;
   volume.LoadVolume( file );
 
   // Establish connections with server
@@ -84,20 +42,29 @@ int main(int argc, char* argv[])
   // Set parameters for testing resliceVolume volume, get (part of) a slice from the volume
   int       sliceNumber = atoi(argv[4]);
   int       translation[2];     translation[0] = 0;                 translation[1] = 0; // Optional
-  int       dStart[3];          dStart[0] = translation[0];         dStart[1] = translation[1];        dStart[2] =sliceNumber; // slice number "slicenumber" without the 5 most left pixels (so translated to the left)
-  VolumeType::SizeType          size = volume.volumeData->GetLargestPossibleRegion().GetSize();
-  int       dSize[3];           dSize[0] = size[0]-translation[0];  dSize[1] = size[1]-translation[1];  dSize[2] = 1;// Note the switch in axis for the translation
+  int       dStart[3];
+  dStart[0] = translation[0];         dStart[1] = translation[1];        dStart[2] =sliceNumber; // slice number "slicenumber" without the 5 most left pixels (so translated to the left)
+  VolumeType::SizeType size = volume.volumeData->GetLargestPossibleRegion().GetSize();
+  int       dSize[3];
+  dSize[0] = size[0]-translation[0];  dSize[1] = size[1]-translation[1];  dSize[2] = 1;// Note the switch in axis for the translation
 
   // Get (part of) a slice of the volume (by cropping) and set it as fixed image for registration
-  cropVolume( &volume, dStart, dSize, &fixedVolume );
+  volume.CropVolume( dStart, dSize, &fixedVolume );
+
+  // Change Transform
+  TransformMatrix updateMatrix;
+  double angles[3] = { 0, 180, 180 };
+  updateMatrix.SetDirectionFrom3Angles( angles );
+  updateMatrix.SetOriginInTransform( fixedVolume.originVolume );
+  //double  upMat[16] = {-1, 0, 0, fixedVolume.originVolume[0], 0, -1, 0, fixedVolume.originVolume[1], 0, 0, 1, fixedVolume.originVolume[2], 0, 0, 0, 1};
+  fixedVolume.UpdateVolumeTransform( updateMatrix );
+  //std::cerr << fixedVolume.volumeMatrix.matrix << std::endl;
+  std::cerr << updateMatrix.matrix << std::endl;
 
   // Send the fixed image to Slicer
   fixedVolume.ConvertITKtoIGTVolume();
-  float spac[3];
-  fixedVolume.imgMsg->GetSpacing(spac);
-  std::cerr<< spac[0]<<std::endl;
   client1.imgMsg = fixedVolume.imgMsg;
-  client1.imgMsg->SetDeviceName( "imageSlice" );
+  client1.imgMsg->SetDeviceName( "croppedImageSlice" );
   client1.SendImage();
 
   // Start registration of the resliced images with other resliced images in the area around it (5 slices before and 5 after) to find the best match
@@ -105,7 +72,9 @@ int main(int argc, char* argv[])
   double            values[testNumber];
   double            bestMatch[2];
   ParametersType    finalParameters;
-  double            initialMatrix[16] = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
+  double            initMat[16] = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
+  TransformMatrix   initialMatrix;
+  initialMatrix.SetTransformFromDouble( initMat );
 
   VolumeRegistration registration;
   registration.SetFixedVolume( &fixedVolume );
@@ -117,10 +86,11 @@ int main(int argc, char* argv[])
 
     // Set parameters for the reslice to match with the fixed image
     dStart[0] = 0;  dStart[1] = 0;  dStart[2] = sliceNumber - ((testNumber-1)/2)+i;
-    int       dSize[3];           dSize[0] = size[0]-translation[0];  dSize[1] = size[1]-translation[1];  dSize[2] = 6;
+    int       dSize[3];
+    dSize[0] = size[0]-translation[0];  dSize[1] = size[1]-translation[1];  dSize[2] = 6;
 
     // Get the new reslice of the volume (by cropping) and set it as the moving image for registration
-    cropVolume( &volume, dStart, dSize, &movingVolume );
+    volume.CropVolume( dStart, dSize, &movingVolume );
 
     // Register the moving and the fixed image and save th emetric values to find the best match
     registration.SetMovingVolume( &movingVolume );

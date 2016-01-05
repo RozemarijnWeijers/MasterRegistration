@@ -100,7 +100,9 @@ void TransformMatrix::SetOriginInTransform( float origin[3] )
 
 void TransformMatrix::SetDirectionInTransform( double dir[9] )
 {
-  this->matrix(0,0) = dir[0];
+  this->matrix(0,0) = dir[0]; this->matrix(1,0) = dir[1]; this->matrix(2,0) = dir[2];
+  this->matrix(0,1) = dir[3]; this->matrix(1,1) = dir[4]; this->matrix(2,1) = dir[5];
+  this->matrix(0,2) = dir[6]; this->matrix(1,2) = dir[7]; this->matrix(2,2) = dir[8];
   if ( this->spacingSetCheck && this->dimensionsSetCheck == true )
   {
     SetIGTTransformFromMat( this->matrix );
@@ -111,6 +113,42 @@ void TransformMatrix::SetDirectionInTransform( double dir[9] )
   }
 
   return;
+}
+
+void TransformMatrix::SetDirectionFrom3Angles( double angles[3] )
+{
+
+  mat rotZaxis;
+  rotZaxis     <<  cos(angles[0]*PI/180) <<      -sin(angles[0]*PI/180) <<    0 <<                      endr
+               <<  sin(angles[0]*PI/180) <<      cos(angles[0]*PI/180) <<     0 <<                      endr
+               <<  0 <<                          0 <<                         1 <<                      endr;
+  mat rotYaxis;
+  rotYaxis     <<  cos(angles[1]*PI/180) <<      0 <<                         sin(angles[1]*PI/180) <<  endr
+               <<  0 <<                          1 <<                         0 <<                      endr
+               <<  -sin(angles[1]*PI/180) <<     0 <<                         cos(angles[1]*PI/180) <<  endr;
+  mat rotXaxis;
+  rotXaxis     <<  1 <<                   0 <<                                0 <<                      endr
+               <<  0 <<                   cos(angles[2]*PI/180) <<           -sin(angles[2]*PI/180) <<  endr
+               <<  0 <<                   sin(angles[2]*PI/180) <<            cos(angles[2]*PI/180) <<  endr;
+  mat rot;
+  rot = rotZaxis * rotYaxis * rotXaxis;
+
+  this->matrix(0,0) = rot(0,0); this->matrix(1,0) = rot(1,0); this->matrix(2,0) = rot(2,0);
+  this->matrix(0,1) = rot(0,1); this->matrix(1,1) = rot(1,1); this->matrix(2,1) = rot(2,1);
+  this->matrix(0,2) = rot(0,2); this->matrix(1,2) = rot(1,2); this->matrix(2,2) = rot(2,2);
+
+
+  if ( this->spacingSetCheck && this->dimensionsSetCheck == true )
+  {
+    SetIGTTransformFromMat( this->matrix );
+  }
+  else
+  {
+    std::cerr << "Spacing ans dimensions not set" << std::endl;
+  }
+
+  return;
+
 }
 
 void TransformMatrix::SetDimensionsForIGTMatrix( int dim[3] )

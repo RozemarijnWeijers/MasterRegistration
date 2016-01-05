@@ -110,8 +110,8 @@ int main(int argc, char* argv[])
   double            values[testNumber];
   double            bestMatch[2];
   ParametersType    finalParameters;
-  //double            initialMatrix[16] = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
   TransformMatrix   initialMatrix;
+
   ImageRegistration registration;
   registration.SetFixedImage( &fixedImage );
 

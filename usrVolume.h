@@ -3,6 +3,7 @@
 
 #include "itkImageFileReader.h"
 #include "igtlImageMessage.h"
+#include <itkExtractImageFilter.h>
 #include <vtkNrrdReader.h>
 #include "vtkSmartPointer.h"
 #include "usrTransformMatrix.h"
@@ -10,6 +11,7 @@
 
 typedef  unsigned char   PixelType;
 typedef  itk::Image< PixelType, 3 >  VolumeType;
+typedef  itk::ExtractImageFilter< VolumeType, VolumeType > FilterType;
 
 class Volume
 {
@@ -22,7 +24,8 @@ class Volume
   void SetParametersFromITK();// TransformMatrix );
   void ConvertITKtoIGTVolume();
   int LoadVolume( char* );
-  void UpdateVolumeTranform( TransformMatrix* );
+  void UpdateVolumeTransform( TransformMatrix );
+  void CropVolume( int[3], int[3], Volume* );
 
   VolumeType::Pointer volumeData;
   vtkSmartPointer<vtkNrrdReader> VTKReader;

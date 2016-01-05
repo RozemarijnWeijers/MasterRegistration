@@ -36,6 +36,7 @@ class VolumeReslice
     void CreateITKReslice();
 
     Image reslicedImage;
+    TransformMatrix resliceMatrix;
 
 
     private:

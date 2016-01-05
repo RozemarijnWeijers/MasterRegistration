@@ -43,13 +43,13 @@ void VolumeRegistration::SetMovingVolume(Volume* VolumePointer)
 
 }
 
-void VolumeRegistration::SetInitialMatrix(double matrix[16])
+void VolumeRegistration::SetInitialMatrix( TransformMatrix matrix1 )
 {
 
-  this->initialMatrix[0] = matrix[0]; this->initialMatrix[1] = matrix[1]; this->initialMatrix[2] = matrix[2]; this->initialMatrix[3] = matrix[3];
-  this->initialMatrix[4] = matrix[4]; this->initialMatrix[5] = matrix[5]; this->initialMatrix[6] = matrix[6]; this->initialMatrix[7] = matrix[7];
-  this->initialMatrix[8] = matrix[8]; this->initialMatrix[9] = matrix[9]; this->initialMatrix[10] = matrix[10]; this->initialMatrix[11] = matrix[11];
-  this->initialMatrix[12] = matrix[12]; this->initialMatrix[13] = matrix[13]; this->initialMatrix[14] = matrix[14]; this->initialMatrix[15] = matrix[15];
+  this->initialMatrix[0] = matrix1.matrix(0,0); this->initialMatrix[1] = matrix1.matrix(0,1); this->initialMatrix[2] = matrix1.matrix(0,2); this->initialMatrix[3] = matrix1.matrix(0,3);
+  this->initialMatrix[4] = matrix1.matrix(1,0); this->initialMatrix[5] = matrix1.matrix(1,1); this->initialMatrix[6] = matrix1.matrix(1,2); this->initialMatrix[7] = matrix1.matrix(1,3);
+  this->initialMatrix[8] = matrix1.matrix(2,0); this->initialMatrix[9] = matrix1.matrix(2,1); this->initialMatrix[10] = matrix1.matrix(2,2); this->initialMatrix[11] = matrix1.matrix(2,3);
+  this->initialMatrix[12] = matrix1.matrix(3,0); this->initialMatrix[13] = matrix1.matrix(3,1); this->initialMatrix[14] = matrix1.matrix(3,2); this->initialMatrix[15] = matrix1.matrix(3,3);
 
   return;
 
@@ -150,6 +150,16 @@ void VolumeRegistration::RegisterVolumes()
   //std::cout << "Metric value: " << this->optimizer->GetValue() << std::endl;
 
   return;
+
+}
+
+TransformMatrix VolumeRegistration::GetRegistrationMatrix()
+{
+
+  TransformMatrix registrationMatrix;
+  registrationMatrix.SetTransformFromDouble( this->registrationMatrix );
+
+  return registrationMatrix;
 
 }
 

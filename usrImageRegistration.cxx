@@ -129,6 +129,7 @@ TransformMatrix ImageRegistration::GetRegistrationMatrix()
   registrationMatrix.SetTransformFromDouble( this->registrationMatrix );
 
   return registrationMatrix;
+
 }
 
 void ImageRegistration::CreateRegisteredImage()
