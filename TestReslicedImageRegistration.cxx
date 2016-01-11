@@ -56,10 +56,10 @@ int main(int argc, char* argv[]) // Why is this one slow? and why does it stop t
   //resliceImageVolumeVTK( volumeVTK.VTKreader, dStart, transformmatrix, &sliceImage );
 
   // Send the fixed image to Slicer
-  volumeReslice.reslicedImage.ConvertITKtoIGTImage();
-  client1.imgMsg = volumeReslice.reslicedImage.imgMsg;
-  client1.imgMsg->SetDeviceName( "sliceImage" );
-  client1.SendImage();
+  //volumeReslice.reslicedImage.ConvertITKtoIGTImage();
+  //client1.imgMsg = volumeReslice.reslicedImage.imgMsg;
+  //client1.imgMsg->SetDeviceName( "sliceImage" );
+  //client1.SendImage();
   //clientIGT2.socket->Send( sliceImage.imgMsg->GetPackPointer(), sliceImage.imgMsg->GetPackSize() );
 
   // Create a message buffer to receive header and image message

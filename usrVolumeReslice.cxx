@@ -18,7 +18,7 @@ VolumeReslice::~VolumeReslice()
 {
 }
 
-void VolumeReslice::SetResliceAxes( double transformMatrix[9] )
+void VolumeReslice::SetResliceAxes( double transformMatrix[16] )
 {
 
   // Set the direction matrix for the reslice function
@@ -47,7 +47,7 @@ void VolumeReslice::SetOriginOfReslice() // relative to volume
   double    volumeOrigin[3];
   this->volume->VTKReader->Update();
   this->volume->VTKReader->GetOutput()->GetOrigin( volumeOrigin );
-  bool RAS = true; //???
+  bool RAS = false; //???
   if ( RAS )
   {
     volumeOrigin[0] = -1 * volumeOrigin[0];
@@ -66,7 +66,7 @@ void VolumeReslice::SetSpacingOfReslice() // relative to volume
 {
 
   this->volume->VTKReader->Update();
-  this->volume->VTKReader->GetOutput()->GetSpacing( resliceSpacing );
+  this->volume->VTKReader->GetOutput()->GetSpacing( this->resliceSpacing );
 
   return;
 
@@ -101,6 +101,7 @@ void VolumeReslice::ResliceVolume()
     this->reslice->SetInterpolationModeToLinear();
     this->reslice->Update();
     this->resliceDoneCheck = true;
+    std::cerr << this->reslice->GetOutput()->GetSpacing()[0] << std::endl;
 
     return;
   }
@@ -131,24 +132,28 @@ void VolumeReslice::CreateITKReslice()
     color->SetLookupTable(table);
     color->SetInputConnection(reslice->GetOutputPort());*/
 
-    vtkSmartPointer<vtkImageActor> actor = vtkSmartPointer<vtkImageActor>::New();
-    actor->GetMapper()->SetInputConnection(this->reslice->GetOutputPort());
+    //vtkSmartPointer<vtkImageActor> actor = vtkSmartPointer<vtkImageActor>::New();
+    //actor->GetMapper()->SetInputConnection(this->reslice->GetOutputPort());
 
-    vtkSmartPointer<vtkRenderer> renderer = vtkSmartPointer<vtkRenderer>::New();
-    renderer->AddActor(actor);
+    //vtkSmartPointer<vtkRenderer> renderer = vtkSmartPointer<vtkRenderer>::New();
+    //renderer->AddActor(actor);
 
-    vtkSmartPointer<vtkRenderWindow> window = vtkSmartPointer<vtkRenderWindow>::New();
-    window->AddRenderer(renderer);
+    //vtkSmartPointer<vtkRenderWindow> window = vtkSmartPointer<vtkRenderWindow>::New();
+    //window->AddRenderer(renderer);
 
-    vtkSmartPointer<vtkInteractorStyleImage> imageStyle = vtkSmartPointer<vtkInteractorStyleImage>::New();
+    //vtkSmartPointer<vtkInteractorStyleImage> imageStyle = vtkSmartPointer<vtkInteractorStyleImage>::New();
     //vtkSmartPointer<vtkRenderWindowInteractor> interactor = vtkSmartPointer<vtkRenderWindowInteractor>::New();
     //interactor->SetInteractorStyle(imageStyle);
     //window->SetInteractor(interactor);
-    window->Render();
+    //window->Render();
     //interactor->Start();
 
     // Convert the VTK image to an ITK image for further processing
-    this->vtkImageToImageFilter->SetInput( reslice->GetOutput() );
+    vtkSmartPointer<vtkImageCast> ic = vtkSmartPointer<vtkImageCast>::New();
+    ic->SetInputConnection(reslice->GetOutputPort());
+    ic->SetOutputScalarTypeToUnsignedChar();
+    ic->Update();
+    this->vtkImageToImageFilter->SetInput( ic->GetOutput() );
     this->vtkImageToImageFilter->Update();
 
     //typedef itk::RescaleIntensityImageFilter< ImageType, ImageType >   RescalerType;
@@ -167,7 +172,7 @@ void VolumeReslice::CreateITKReslice()
     // Set correct image parameters for the ITK image
     this->reslicedImage.imageData->SetOrigin( this->resliceOrigin );
     this->reslicedImage.imageData->SetSpacing( this->resliceSpacing );
-    //this->reslicedImage.SetParametersFromITK( this->resliceOrigin[2], this->resliceSpacing[2],  ); //Set spacing and origin in imageData
+    //this->reslicedImage.SetParametersFromITK(this->resliceOrigin[2], this->resliceSpacing[2],  ); //Set spacing and origin in imageData
   }
   else
   {

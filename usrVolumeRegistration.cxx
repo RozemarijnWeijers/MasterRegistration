@@ -189,3 +189,10 @@ void VolumeRegistration::CreateRegisteredVolume()
   return;
 
 }
+
+/*transform->SetParameters( finalParameters );
+  TransformType::MatrixType matrix = transform->GetMatrix();
+  TransformType::OffsetType offset = transform->GetOffset();
+  std::cout << "Matrix = " << std::endl << matrix << std::endl;
+  std::cout << "Offset = " << std::endl << offset << std::endl;*/
+

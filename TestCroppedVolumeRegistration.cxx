@@ -57,7 +57,7 @@ int main(int argc, char* argv[])
   updateMatrix.SetDirectionFrom3Angles( angles );
   updateMatrix.SetOriginInTransform( fixedVolume.originVolume );
   //double  upMat[16] = {-1, 0, 0, fixedVolume.originVolume[0], 0, -1, 0, fixedVolume.originVolume[1], 0, 0, 1, fixedVolume.originVolume[2], 0, 0, 0, 1};
-  fixedVolume.UpdateVolumeTransform( updateMatrix );
+  //fixedVolume.UpdateVolumeTransform( updateMatrix );
   //std::cerr << fixedVolume.volumeMatrix.matrix << std::endl;
   std::cerr << updateMatrix.matrix << std::endl;
 

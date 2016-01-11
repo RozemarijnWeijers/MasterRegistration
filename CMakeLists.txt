@@ -31,6 +31,8 @@ set( USR_SOURCES
 	usrVolumeRegistration.cxx
 	usrVolumeReslice.cxx
 	usrTransformMatrix.cxx
+	usrVolumeCropping.cxx
+	usrImageCropping.cxx
 	)
 
 set( USR_HEADERS
@@ -41,34 +43,36 @@ set( USR_HEADERS
 	usrVolumeRegistration.h
 	usrVolumeReslice.h
 	usrTransformMatrix.h
+	usrVolumeCropping.h
+	usrImageCropping.h
 	)
 
 add_library(usrLib ${USR_SOURCES} ${USR_HEADERS})
 #TARGET_LINK_LIBRARIES(usrLib OpenIGTLink)
 
-add_executable(TestIGTImageRegistration TestIGTImageRegistration.cxx)
-target_link_libraries(TestIGTImageRegistration usrLib)
-TARGET_LINK_LIBRARIES(TestIGTImageRegistration OpenIGTLink)
-if( "${ITK_VERSION_MAJOR}" LESS 4 )
-  target_link_libraries(TestIGTImageRegistration ITKReview ${ITK_LIBRARIES})
-else( "${ITK_VERSION_MAJOR}" LESS 4 )
-  target_link_libraries(TestIGTImageRegistration ${ITK_LIBRARIES})
-endif( "${ITK_VERSION_MAJOR}" LESS 4 )
-target_link_Libraries(TestIGTImageRegistration ${VTK_LIBRARIES})
-target_link_libraries(TestIGTImageRegistration ${Glue})
-target_link_libraries(TestIGTImageRegistration ${ARMADILLO_LIBRARIES})
+#add_executable(TestIGTImageRegistration TestIGTImageRegistration.cxx)
+#target_link_libraries(TestIGTImageRegistration usrLib)
+#TARGET_LINK_LIBRARIES(TestIGTImageRegistration OpenIGTLink)
+#if( "${ITK_VERSION_MAJOR}" LESS 4 )
+#  target_link_libraries(TestIGTImageRegistration ITKReview ${ITK_LIBRARIES})
+#else( "${ITK_VERSION_MAJOR}" LESS 4 )
+#  target_link_libraries(TestIGTImageRegistration ${ITK_LIBRARIES})
+#endif( "${ITK_VERSION_MAJOR}" LESS 4 )
+#target_link_Libraries(TestIGTImageRegistration ${VTK_LIBRARIES})
+#target_link_libraries(TestIGTImageRegistration ${Glue})
+#target_link_libraries(TestIGTImageRegistration ${ARMADILLO_LIBRARIES})
 
-add_executable(TestCroppedImageRegistration TestCroppedImageRegistration.cxx)
-target_link_libraries(TestCroppedImageRegistration usrLib)
-TARGET_LINK_LIBRARIES(TestCroppedImageRegistration OpenIGTLink)
-if( "${ITK_VERSION_MAJOR}" LESS 4 )
-  target_link_libraries(TestCroppedImageRegistration ITKReview ${ITK_LIBRARIES})
-else( "${ITK_VERSION_MAJOR}" LESS 4 )
-  target_link_libraries(TestCroppedImageRegistration ${ITK_LIBRARIES})
-endif( "${ITK_VERSION_MAJOR}" LESS 4 )
-target_link_Libraries(TestCroppedImageRegistration ${VTK_LIBRARIES})
-target_link_libraries(TestCroppedImageRegistration ${Glue})
-target_link_libraries(TestCroppedImageRegistration ${ARMADILLO_LIBRARIES})
+#add_executable(TestCroppedImageRegistration TestCroppedImageRegistration.cxx)
+#target_link_libraries(TestCroppedImageRegistration usrLib)
+#TARGET_LINK_LIBRARIES(TestCroppedImageRegistration OpenIGTLink)
+#if( "${ITK_VERSION_MAJOR}" LESS 4 )
+#  target_link_libraries(TestCroppedImageRegistration ITKReview ${ITK_LIBRARIES})
+#else( "${ITK_VERSION_MAJOR}" LESS 4 )
+#  target_link_libraries(TestCroppedImageRegistration ${ITK_LIBRARIES})
+#endif( "${ITK_VERSION_MAJOR}" LESS 4 )
+#target_link_Libraries(TestCroppedImageRegistration ${VTK_LIBRARIES})
+#target_link_libraries(TestCroppedImageRegistration ${Glue})
+#target_link_libraries(TestCroppedImageRegistration ${ARMADILLO_LIBRARIES})
 
 add_executable(TestReslicedImageRegistration TestReslicedImageRegistration.cxx)
 target_link_libraries(TestReslicedImageRegistration usrLib)
@@ -82,15 +86,27 @@ target_link_Libraries(TestReslicedImageRegistration ${VTK_LIBRARIES})
 target_link_libraries(TestReslicedImageRegistration ${Glue})
 target_link_libraries(TestReslicedImageRegistration ${ARMADILLO_LIBRARIES})
 
-add_executable(TestCroppedVolumeRegistration TestCroppedVolumeRegistration.cxx)
-target_link_libraries(TestCroppedVolumeRegistration usrLib)
-TARGET_LINK_LIBRARIES(TestCroppedVolumeRegistration OpenIGTLink)
+#add_executable(TestCroppedVolumeRegistration TestCroppedVolumeRegistration.cxx)
+#target_link_libraries(TestCroppedVolumeRegistration usrLib)
+#TARGET_LINK_LIBRARIES(TestCroppedVolumeRegistration OpenIGTLink)
+#if( "${ITK_VERSION_MAJOR}" LESS 4 )
+#  target_link_libraries(TestCroppedVolumeRegistration ITKReview ${ITK_LIBRARIES})
+#else( "${ITK_VERSION_MAJOR}" LESS 4 )
+#  target_link_libraries(TestCroppedVolumeRegistration ${ITK_LIBRARIES})
+#endif( "${ITK_VERSION_MAJOR}" LESS 4 )
+#target_link_Libraries(TestCroppedVolumeRegistration ${VTK_LIBRARIES})
+#target_link_libraries(TestCroppedVolumeRegistration ${Glue})
+#target_link_libraries(TestCroppedVolumeRegistration ${ARMADILLO_LIBRARIES})
+
+add_executable(SimulationTest SimulationTest.cxx)
+target_link_libraries(SimulationTest usrLib)
+TARGET_LINK_LIBRARIES(SimulationTest OpenIGTLink)
 if( "${ITK_VERSION_MAJOR}" LESS 4 )
-  target_link_libraries(TestCroppedVolumeRegistration ITKReview ${ITK_LIBRARIES})
+  target_link_libraries(SimulationTest ITKReview ${ITK_LIBRARIES})
 else( "${ITK_VERSION_MAJOR}" LESS 4 )
-  target_link_libraries(TestCroppedVolumeRegistration ${ITK_LIBRARIES})
+  target_link_libraries(SimulationTest ${ITK_LIBRARIES})
 endif( "${ITK_VERSION_MAJOR}" LESS 4 )
-target_link_Libraries(TestCroppedVolumeRegistration ${VTK_LIBRARIES})
-target_link_libraries(TestCroppedVolumeRegistration ${Glue})
-target_link_libraries(TestCroppedVolumeRegistration ${ARMADILLO_LIBRARIES})
+target_link_Libraries(SimulationTest ${VTK_LIBRARIES})
+target_link_libraries(SimulationTest ${Glue})
+target_link_libraries(SimulationTest ${ARMADILLO_LIBRARIES})
 

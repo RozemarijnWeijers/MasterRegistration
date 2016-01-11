@@ -14,6 +14,7 @@
 #include "vtkImageMapper3D.h"
 #include "vtkRenderWindowInteractor.h"
 #include "vtkInteractorStyleImage.h"
+#include "vtkImageCast.h"
 #include "itkRescaleIntensityImageFilter.h"
 
 #include "usrImage.h"
@@ -30,7 +31,7 @@ class VolumeReslice
     ~VolumeReslice();
 
     void ResliceVolume();
-    void SetResliceAxes( double [9]);
+    void SetResliceAxes( double [16]);
     void SetOriginOfResliceWRTVolume( double[3] );
     void SetVolume( Volume* );
     void CreateITKReslice();
