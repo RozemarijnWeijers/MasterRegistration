@@ -6,6 +6,7 @@
 #include "usrVolumeReslice.h"
 #include "usrVolumeCropping.h"
 #include "usrImageCropping.h"
+#include "usrRotationMatrix.h"
 
 int main(int argc, char* argv[])
 {
@@ -32,6 +33,8 @@ int main(int argc, char* argv[])
     client1.imgMsg->SetDeviceName( "Volume" );
     client1.SendImage();
 
+    volume.volumeMatrix.ShowMatrix();
+
     // Create registration volumes
     Volume    fixedVolume;
     Volume    movingVolume;
@@ -52,34 +55,36 @@ int main(int argc, char* argv[])
     resliceVolume.SetVolume( &volume );
     //resliceVolume.SetSpacingOfReslice();
     //resliceVolume.SetOriginOfReslice();
-    double resliceAxes[16] = {
-            1, 0, 0, 0,
-            0, 1, 0, 0,
-            0, 0, 1, 0,
-            0, 0, 0, 1 };
-    double resliceOrigin[3] = {0, 0, 6};
-    resliceVolume.SetResliceAxes( resliceAxes );
+    RotationMatrix rotMat;
+    double angles[3] = { 0, 0, 0};
+    rotMat.Set3Angels( angles );
+    float resliceOrigin[3] = {0, 0, 0};
+    resliceVolume.SetResliceAxesWRTVolume( rotMat.matrixDouble );
     resliceVolume.SetOriginOfResliceWRTVolume( resliceOrigin );
     resliceVolume.ResliceVolume();
     resliceVolume.CreateITKReslice();
+    resliceVolume.reslicedImage.imageMatrix.ShowMatrix();
 
-    //resliceVolume.reslicedImage.ConvertITKtoIGTVolume();
-    //client1.imgMsg = volume.imgMsg;
-    //client1.imgMsg->SetDeviceName( "Volume1" );
-    //client1.SendImage();
+    resliceVolume.reslicedImage.ConvertITKtoIGTImage();
+    client1.imgMsg = resliceVolume.reslicedImage.imgMsg;
+    client1.imgMsg->SetDeviceName( "Volume1" );
+    client1.SendImage();
 
     ImageCropping cropReslice;
+    std::cerr << resliceVolume.reslicedImage.spacingImage[0] << std::endl;
     cropReslice.SetImage( &resliceVolume.reslicedImage );
-    int dsize[3] = {10, 1};
-    int dstart[3] = {0, 0};
+    int dsize[3] = {100, 100};
+    int dstart[3] = {250, 150};
     cropReslice.SetCropSizeAndStart( dsize, dstart );
     cropReslice.CropImage();
+    cropReslice.Convert2DImageTo3DVolume();
 
-    //cropReslice.croppedVolume.SetParametersFromITK();
-    //cropReslice.croppedVolume.ConvertITKtoIGTVolume();
-    //client1.imgMsg = volume.imgMsg;
-    //client1.imgMsg->SetDeviceName( "Volume2" );
-    //client1.SendImage();
+    cropReslice.croppedVolume.SetParametersFromITK();
+    cropReslice.croppedVolume.ConvertITKtoIGTVolume();
+    cropReslice.croppedImage.ConvertITKtoIGTImage();
+    client1.imgMsg = cropReslice.croppedImage.imgMsg;
+    client1.imgMsg->SetDeviceName( "Volume2" );
+    client1.SendImage();
 
 
     double values[10];

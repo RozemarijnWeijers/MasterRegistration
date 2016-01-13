@@ -174,3 +174,15 @@ void TransformMatrix::SetSpacingForIGTMatrix( float spac[3] )
   return;
 
 }
+
+void TransformMatrix::ShowMatrix()
+{
+  std::cerr<< "IGTMatrix:" << std::endl;
+  std::cerr << this->IGTMatrix[0][0] << ", "<< this->IGTMatrix[0][1] <<", "<< this->IGTMatrix[0][2] <<", "<< this->IGTMatrix[0][3] <<std::endl;
+  std::cerr << this->IGTMatrix[1][0] << ", "<< this->IGTMatrix[1][1] <<", "<< this->IGTMatrix[1][2] <<", "<< this->IGTMatrix[1][3] <<std::endl;
+  std::cerr << this->IGTMatrix[2][0] << ", "<< this->IGTMatrix[2][1] <<", "<< this->IGTMatrix[2][2] <<", "<< this->IGTMatrix[2][3] <<std::endl;
+  std::cerr << this->IGTMatrix[3][0] << ", "<< this->IGTMatrix[3][1] <<", "<< this->IGTMatrix[3][2] <<", "<< this->IGTMatrix[3][3] <<std::endl;  std::cerr << "Matrix:" << std::endl;
+  std::cerr << this->matrix <<std::endl;
+  return;
+
+}

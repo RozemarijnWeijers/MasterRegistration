@@ -25,6 +25,7 @@ class TransformMatrix
   void SetSpacingForIGTMatrix( float[3] );
   void SetDirectionFrom3Angles( double[3] );
   void SetIGTTransformFromMat( mat );
+  void ShowMatrix();
 
   igtl::Matrix4x4 IGTMatrix;
 

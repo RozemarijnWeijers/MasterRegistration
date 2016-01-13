@@ -6,16 +6,7 @@
 #include "vtkImageData.h"
 #include "vtkMatrix4x4.h"
 #include "vtkImageReslice.h"
-#include "vtkLookupTable.h"
-#include "vtkImageMapToColors.h"
-#include "vtkImageActor.h"
-#include "vtkRenderer.h"
-#include "vtkRenderWindow.h"
-#include "vtkImageMapper3D.h"
-#include "vtkRenderWindowInteractor.h"
-#include "vtkInteractorStyleImage.h"
 #include "vtkImageCast.h"
-#include "itkRescaleIntensityImageFilter.h"
 
 #include "usrImage.h"
 #include "usrVolume.h"
@@ -31,27 +22,28 @@ class VolumeReslice
     ~VolumeReslice();
 
     void ResliceVolume();
-    void SetResliceAxes( double [16]);
-    void SetOriginOfResliceWRTVolume( double[3] );
+    void SetResliceAxesWRTVolume( double [9]);
+    void SetOriginOfResliceWRTVolume( float[3] );
     void SetVolume( Volume* );
     void CreateITKReslice();
 
     Image reslicedImage;
     TransformMatrix resliceMatrix;
 
-
     private:
 
-    void SetOriginOfReslice();
+    void SetResliceMatrix();
     void SetSpacingOfReslice();
 
     vtkSmartPointer<vtkImageReslice> reslice;
     vtkSmartPointer<vtkMatrix4x4> resliceAxes;
     VTKImageToImageType::Pointer vtkImageToImageFilter;
-    double resliceOriginWRTVolume[3];
+    float resliceOriginWRTVolume[3];
     double resliceOrigin[3];
-    double resliceSpacing[3];
+    float resliceSpacing[3];
+    double transformDirections[9];
     Volume* volume;
+    TransformMatrix resliceMatrixWRTVolume;
 
     bool axesSetCheck;
     bool volumeSetCheck;

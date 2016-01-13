@@ -1,15 +1,14 @@
 #include "itkImage.h"
-#include "itkImageRegistrationMethod.h"
-#include "itkMeanSquaresImageToImageMetric.h"
-#include "itkVersorRigid3DTransformOptimizer.h"
 #include "itkResampleImageFilter.h"
-#include "itkRescaleIntensityImageFilter.h"
 #include <itkExtractImageFilter.h>
-#include "itkVersorRigid3DTransform.h"
-#include "itkCenteredTransformInitializer.h"
 #include "usrImage.h"
-#include "usrTransformMatrix.h"
+#include "usrVolume.h"
+#include "itkTileImageFilter.h"
+#include <QuickView.h>
 
+const unsigned int InputDimension   = 2;
+const unsigned int OutputDimension  = 3;
+typedef itk::TileImageFilter< ImageType, VolumeType > Filter2DTo3DType;
 typedef itk::ExtractImageFilter< ImageType, ImageType > FilterImageType;
 
 class ImageCropping
@@ -23,14 +22,16 @@ class ImageCropping
   void SetImage( Image* );
   void SetCropSizeAndStart( int[2], int[2]);
   void CropImage();
+  void Convert2DImageTo3DVolume();
 
   Image                        croppedImage;
+  Volume                       croppedVolume;
 
   private:
 
   ImageType::IndexType         desiredStart;
   ImageType::SizeType          desiredSize ;
   Image*                       inputImage;
-  FilterImageType::Pointer          filter;
+  FilterImageType::Pointer     filter;
 
 };

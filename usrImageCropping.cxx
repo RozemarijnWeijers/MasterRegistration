@@ -47,7 +47,7 @@ void ImageCropping::CropImage()
   this->croppedImage.imageData = this->filter->GetOutput();
 
   // Get and set parameters for reslices image    // spacing (mm/pixel)
-  ImageType::PointType         origin;
+  ImageType::PointType          origin;
   float                         originSliceImage[3];
   double                        spacingSliceImage[3];
 
@@ -56,15 +56,46 @@ void ImageCropping::CropImage()
   spacingSliceImage[0] = spacing[0]; spacingSliceImage[1] = spacing[1]; spacingSliceImage[2] = spacing[2];
   originSliceImage[0] = start1[0] + desiredStart[0]; originSliceImage[1] = start1[1] + desiredStart[1];   originSliceImage[2] = start1[2] + desiredStart[2];
 
+
+  this->croppedImage.imageMatrix.matrix = this->inputImage->imageMatrix.matrix;
+  this->croppedImage.imageMatrix.SetDimensionsForIGTMatrix( croppedImage.sizeImage );
+  this->croppedImage.imageMatrix.SetSpacingForIGTMatrix( spacing);
+  this->croppedImage.imageMatrix.SetIGTTransformFromMat( this->inputImage->imageMatrix.matrix );
+  this->croppedImage.imageMatrix.ShowMatrix();
   this->croppedImage.imageData->SetSpacing( spacing );
   this->croppedImage.imageData->SetOrigin( originSliceImage );
-  int tempSize[3];
-  /*tempSize[0] = this->desiredSize[0]; tempSize[1] = this->desiredSize[1]; tempSize[2] = this->desiredSize[2];
-  this->croppedImage.volumeMatrix.SetDimensionsForIGTMatrix( tempSize );
-  this->croppedImage.volumeMatrix.SetSpacingForIGTMatrix( spacing );
-  this->croppedImage.volumeMatrix.SetOriginInTransform( originSliceImage );
-  this->croppedImage.SetParametersFromITK();//( originSliceImage[2], spacingSliceImage[2], croppedVolume.volumeMatrix );
-*/
+  this->croppedImage.SetParametersFromITK( originSliceImage[2], spacingSliceImage[2], croppedImage.imageMatrix );
+  std::cerr<< spacing[0] <<std::endl;
+
+  /*QuickView viewer;
+  viewer.AddImage( this->croppedImage.imageData.GetPointer() ); // Need to do this because QuickView can't accept smart pointers
+  viewer.Visualize();*/
+
+  return;
+
+}
+
+void ImageCropping::Convert2DImageTo3DVolume()
+{
+
+  Filter2DTo3DType::Pointer filter2DTo3D = Filter2DTo3DType::New();
+
+  itk::FixedArray< unsigned char, OutputDimension > layout;
+  layout[0] = 1;
+  layout[1] = 1;
+  layout[2] = 0;
+
+  filter2DTo3D->SetLayout( layout );
+
+  ImageType::Pointer input = this->croppedImage.imageData;
+
+  filter2DTo3D->SetInput( 0, input );
+
+  //typedef unsigned char                             PixelType;
+  //const PixelType defaultValue = 128;
+
+  //filter->SetDefaultPixelValue( defaultValue );
+
   return;
 
 }

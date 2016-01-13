@@ -37,19 +37,18 @@ int main(int argc, char* argv[]) // Why is this one slow? and why does it stop t
   //Image    movingImage;
 
   // Test resliceImage volume, start point relative to volume coordinates (through which to slice)
-  double       dStart[3];
+  float       dStart[3];
   dStart[0]=0; dStart[1]=0; dStart[2]=atoi( argv[4] );
   // Test matrix for reslicing axial
-  static double transformMatrix[16] = {
-            1, 0, 0, 0,
-            0, 1, 0, 0,
-            0, 0, 1, 0,
-            0, 0, 0, 1 };
+  static double transformMatrix[9] = {
+            1, 0, 0,
+            0, 1, 0,
+            0, 0, 1};
 
   //resliceImageVolume(&volume, dStart, dSize, &sliceImage);
   VolumeReslice volumeReslice;
   volumeReslice.SetOriginOfResliceWRTVolume( dStart );
-  volumeReslice.SetResliceAxes( transformMatrix );
+  volumeReslice.SetResliceAxesWRTVolume( transformMatrix );
   volumeReslice.SetVolume( &volume );
   volumeReslice.ResliceVolume();
   volumeReslice.CreateITKReslice();
