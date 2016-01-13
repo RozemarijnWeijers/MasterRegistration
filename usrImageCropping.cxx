@@ -57,19 +57,41 @@ void ImageCropping::CropImage()
   originSliceImage[0] = start1[0] + desiredStart[0]; originSliceImage[1] = start1[1] + desiredStart[1];   originSliceImage[2] = start1[2] + desiredStart[2];
 
 
-  this->croppedImage.imageMatrix.matrix = this->inputImage->imageMatrix.matrix;
-  this->croppedImage.imageMatrix.SetDimensionsForIGTMatrix( croppedImage.sizeImage );
-  this->croppedImage.imageMatrix.SetSpacingForIGTMatrix( spacing);
-  this->croppedImage.imageMatrix.SetIGTTransformFromMat( this->inputImage->imageMatrix.matrix );
-  this->croppedImage.imageMatrix.ShowMatrix();
   this->croppedImage.imageData->SetSpacing( spacing );
   this->croppedImage.imageData->SetOrigin( originSliceImage );
+  this->SetImageMatrix();
+
   this->croppedImage.SetParametersFromITK( originSliceImage[2], spacingSliceImage[2], croppedImage.imageMatrix );
   std::cerr<< spacing[0] <<std::endl;
 
   /*QuickView viewer;
   viewer.AddImage( this->croppedImage.imageData.GetPointer() ); // Need to do this because QuickView can't accept smart pointers
   viewer.Visualize();*/
+
+  return;
+
+}
+
+void ImageCropping::SetImageMatrix()
+{
+
+  float* spacing = this->inputImage->spacingImage;
+  this->croppedImage.imageMatrix.matrix = this->inputImage->imageMatrix.matrix;
+  this->croppedImage.imageMatrix.SetDimensionsForIGTMatrix( croppedImage.sizeImage );
+  this->croppedImage.imageMatrix.SetSpacingForIGTMatrix( spacing );
+  this->croppedImage.imageMatrix.SetIGTTransformFromMat();
+
+  TransformMatrix cropMatrix;
+  cropMatrix.SetDimensionsForIGTMatrix( croppedImage.sizeImage );
+  cropMatrix.SetSpacingForIGTMatrix( spacing );
+  float dStart[3] = { this->desiredStart[0], this->desiredStart[1], 0 };
+  cropMatrix.SetOriginInTransform( dStart );
+
+  this->croppedImage.imageMatrix.ShowMatrix();
+  this->croppedImage.imageMatrix.MultiplyWith( cropMatrix.matrix );
+
+  std::cerr<<"cropped imageMatrix:"<< std::endl;
+  this->croppedImage.imageMatrix.ShowMatrix();
 
   return;
 

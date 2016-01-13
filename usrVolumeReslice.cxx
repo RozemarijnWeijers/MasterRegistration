@@ -51,10 +51,13 @@ void VolumeReslice::SetResliceMatrix() // relative to volume
   this->resliceMatrixWRTVolume.SetDirectionInTransform( this->transformDirections );
   this->resliceMatrixWRTVolume.SetOriginInTransform( this->resliceOriginWRTVolume );
   mat tempmat;
-  tempmat = this->resliceMatrixWRTVolume.matrix * this->volume->volumeMatrix.matrix;
+  tempmat = this->volume->volumeMatrix.matrix * this->resliceMatrixWRTVolume.matrix;
+  this->resliceMatrix.SetSpacingForIGTMatrix( this->volume->spacingVolume );
+  this->resliceMatrix.SetDimensionsForIGTMatrix( this->volume->sizeVolume ); //??
   this->resliceMatrix.matrix = tempmat;
+  this->resliceMatrix.SetIGTTransformFromMat();
 
-  double transformMatrix1[9];
+  double transformMatrix1[12];
   transformMatrix1[0] = this->resliceMatrix.matrix(0 ,0); transformMatrix1[1] = this->resliceMatrix.matrix(0 ,1); transformMatrix1[2] = this->resliceMatrix.matrix(0 ,2); transformMatrix1[3] = this->resliceMatrix.matrix(0 ,3);
   transformMatrix1[4] = this->resliceMatrix.matrix(1 ,0); transformMatrix1[5] = this->resliceMatrix.matrix(1 ,1); transformMatrix1[6] = this->resliceMatrix.matrix(1, 2); transformMatrix1[7] = this->resliceMatrix.matrix(1 ,3);
   transformMatrix1[8] = this->resliceMatrix.matrix(2 ,0); transformMatrix1[9] = this->resliceMatrix.matrix(2 ,1); transformMatrix1[10] = this->resliceMatrix.matrix(2 ,2); transformMatrix1[11] = this->resliceMatrix.matrix(2 ,3);
@@ -86,11 +89,6 @@ void VolumeReslice::SetSpacingOfReslice() // relative to volume
 {
 
   this->volume->VTKReader->Update();
-  double tempSpac[3];
-  this->volume->VTKReader->GetOutput()->GetSpacing( tempSpac );
-  this->resliceSpacing[0] = tempSpac[0];
-  this->resliceSpacing[1] = tempSpac[1];
-  this->resliceSpacing[2] = tempSpac[2];
 
   return;
 
@@ -129,7 +127,6 @@ void VolumeReslice::ResliceVolume()
     this->reslice->SetInterpolationModeToLinear();
     this->reslice->Update();
     this->resliceDoneCheck = true;
-    std::cerr << this->reslice->GetOutput()->GetSpacing()[0] << std::endl;
 
     return;
   }
@@ -151,35 +148,41 @@ void VolumeReslice::CreateITKReslice()
     // Convert the VTK image to an ITK image for further processing
     vtkSmartPointer<vtkImageCast> ic = vtkSmartPointer<vtkImageCast>::New();
     ic->SetInputConnection(reslice->GetOutputPort());
-    ic->SetOutputScalarTypeToUnsignedChar(); //unsigned short to unsigned char
+    ic->SetOutputScalarTypeToUnsignedChar(); //unsigned short to unsigned char DIMENSIONS!!
     ic->Update();
     this->vtkImageToImageFilter->SetInput( ic->GetOutput() );
     this->vtkImageToImageFilter->Update();
+    double tempSpac[3];
+    this->reslice->GetOutput()->GetSpacing( tempSpac );
+    this->resliceSpacing[0] = tempSpac[0];
+    this->resliceSpacing[1] = tempSpac[1];
+    this->resliceSpacing[2] = tempSpac[2];
 
     this->reslicedImage.imageData->Graft( this->vtkImageToImageFilter->GetOutput() );
-
-    int tempDem[2];
-    ic->GetOutput()->GetDimensions( tempDem );
-    std::cerr << tempDem[1] << std::endl;
-    ImageType::SizeType size = this->reslicedImage.imageData->GetLargestPossibleRegion().GetSize();
-    std::cerr << size << std::endl;
 
     QuickView viewer;
     viewer.AddImage( this->reslicedImage.imageData.GetPointer() ); // Need to do this because QuickView can't accept smart pointers
     viewer.Visualize();
 
-    this->SetSpacingOfReslice();
+
+    //this->reslicedImage.imageData->SetOrigin( this->resliceOrigin );
+    //this->reslicedImage.imageData->SetSpacing( this->resliceSpacing );
+
+    //this->SetSpacingOfReslice();
     this->resliceMatrix.SetSpacingForIGTMatrix( this->resliceSpacing );
     int sizeImage[3] = {1, 1, 1};
     int tempSize[3];
-    this->volume->VTKReader->GetOutput()->GetDimensions( tempSize );
+    ic->GetOutput()->GetDimensions( tempSize );
     sizeImage[0] = tempSize[0]; sizeImage[1] = tempSize[1];
     this->resliceMatrix.SetDimensionsForIGTMatrix( sizeImage );
-    this->resliceMatrix.SetIGTTransformFromMat( this->resliceMatrix.matrix );
+    this->resliceMatrix.matrix = this->resliceMatrix.matrix;
+    this->resliceMatrix.SetIGTTransformFromMat();
+    std::cerr<< tempSize[0]<< ", "<< tempSize[1] << ", "<< tempSize[2] <<std::endl;
+    std::cerr<< this->resliceSpacing [0]<< ", "<< this->resliceSpacing [1] << ", "<< this->resliceSpacing [2] <<std::endl;
+    this->resliceMatrix.ShowMatrix();
 
     // Set correct image parameters for the ITK image
-    this->reslicedImage.imageData->SetOrigin( this->resliceOrigin );
-    this->reslicedImage.imageData->SetSpacing( this->resliceSpacing );
+
     this->reslicedImage.SetParametersFromITK(this->resliceOrigin[2], this->resliceSpacing[2], this->resliceMatrix); //Set spacing and origin in imageData
 
   }

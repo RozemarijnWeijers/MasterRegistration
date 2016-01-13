@@ -22,7 +22,7 @@ void TransformMatrix::SetTransformFromDouble( double transformMatrix[16] )
                << transformMatrix[8] << transformMatrix[9] << transformMatrix[10] << transformMatrix[11] << endr
                << transformMatrix[12] << transformMatrix[13] << transformMatrix[14] << transformMatrix[15] << endr;
 
-  this->SetIGTTransformFromMat( this->matrix );
+  this->SetIGTTransformFromMat();
 
   return;
 
@@ -52,27 +52,46 @@ void TransformMatrix::SetTransformFromIGT( igtl::ImageMessage::Pointer imgMsg )
 
 }
 
-void TransformMatrix::SetIGTTransformFromMat( mat matrix )
+mat MultiplyMatrixAWithB( mat matrixA, mat matrixB )
 {
 
-  //dimensions and spacing!!
+  mat tempMatrix;
+  tempMatrix = matrixB * matrixA;
+
+  return tempMatrix;
+
+}
+
+void TransformMatrix::SetIGTTransformFromMat()
+{
+
   if ( this->spacingSetCheck && this->dimensionsSetCheck == true )
   {
+      mat tempMat1;
+      mat tempMat2;
+      mat tempMat3;
+      tempMat1 = eye(4,4);
+      tempMat2 = this->matrix;
       double originIGT[3];
       for ( int i=0; i<3; i++)
       {
-        originIGT[i] = matrix(i,3)+((this->dimensions[i]-1)*this->spacing[i]/2);
+        originIGT[i] = (this->dimensions[i]-1)*this->spacing[i]/2;//matrix(i,3)+((this->dimensions[i]-1)*this->spacing[i]/2);
       }
+      tempMat1(0,3) = originIGT[0];
+      tempMat1(1,3) = originIGT[1];
+      tempMat1(2,3) = originIGT[2];
+      tempMat3 = MultiplyMatrixAWithB(tempMat1, tempMat2 );
 
-      this->IGTMatrix[0][0] = matrix(0,0); this->IGTMatrix[0][1] = matrix(0,1); this->IGTMatrix[0][2] = matrix(0,2); this->IGTMatrix[0][3] = originIGT[0];
-      this->IGTMatrix[1][0] = matrix(1,0); this->IGTMatrix[1][1] = matrix(1,1); this->IGTMatrix[1][2] = matrix(1,2); this->IGTMatrix[1][3] = originIGT[1];
-      this->IGTMatrix[2][0] = matrix(2,0); this->IGTMatrix[2][1] = matrix(2,1); this->IGTMatrix[2][2] = matrix(2,2); this->IGTMatrix[2][3] = originIGT[2];
-      this->IGTMatrix[3][0] = matrix(3,0); this->IGTMatrix[3][1] = matrix(3,1); this->IGTMatrix[3][2] = matrix(3,2); this->IGTMatrix[3][3] = matrix(3,3);
+      this->IGTMatrix[0][0] = this->matrix(0,0); this->IGTMatrix[0][1] = this->matrix(0,1); this->IGTMatrix[0][2] = this->matrix(0,2); this->IGTMatrix[0][3] = tempMat3(0,3);
+      this->IGTMatrix[1][0] = this->matrix(1,0); this->IGTMatrix[1][1] = this->matrix(1,1); this->IGTMatrix[1][2] = this->matrix(1,2); this->IGTMatrix[1][3] = tempMat3(1,3);
+      this->IGTMatrix[2][0] = this->matrix(2,0); this->IGTMatrix[2][1] = this->matrix(2,1); this->IGTMatrix[2][2] = this->matrix(2,2); this->IGTMatrix[2][3] = tempMat3(2,3);
+      this->IGTMatrix[3][0] = this->matrix(3,0); this->IGTMatrix[3][1] = this->matrix(3,1); this->IGTMatrix[3][2] = this->matrix(3,2); this->IGTMatrix[3][3] = this->matrix(3,3);
   }
   else
   {
     std::cerr << "Spacing ans dimensions not set" << std::endl;
   }
+
   return;
 
 }
@@ -87,7 +106,42 @@ void TransformMatrix::SetOriginInTransform( float origin[3] )
 
   if ( this->spacingSetCheck && this->dimensionsSetCheck == true )
   {
-    SetIGTTransformFromMat( this->matrix );
+    SetIGTTransformFromMat();
+  }
+  else
+  {
+    std::cerr << "Spacing ans dimensions not set" << std::endl;
+  }
+
+  return;
+
+}
+
+void TransformMatrix::SetCentreOriginInTransform( float centreOrigin[3] )
+{
+
+  mat tempMat1;
+  mat tempMat2;
+  mat tempMat3;
+  tempMat1 = eye(4,4);
+  tempMat2 = this->matrix;
+  double originCorner[3];
+  for ( int i=0; i<3; i++)
+  {
+     originCorner[i] = -(this->dimensions[i]-1)*this->spacing[i]/2;//matrix(i,3)+((this->dimensions[i]-1)*this->spacing[i]/2);
+  }
+  tempMat1(0,3) = originCorner[0];
+  tempMat1(1,3) = originCorner[1];
+  tempMat1(2,3) = originCorner[2];
+  tempMat3 = MultiplyMatrixAWithB(tempMat1, tempMat2 );
+
+  this->matrix(0,3) = tempMat3(0,3);
+  this->matrix(1,3) = tempMat3(1,3);
+  this->matrix(2,3) = tempMat3(2,3);
+
+  if ( this->spacingSetCheck && this->dimensionsSetCheck == true )
+  {
+    SetIGTTransformFromMat();
   }
   else
   {
@@ -105,7 +159,7 @@ void TransformMatrix::SetDirectionInTransform( double dir[9] )
   this->matrix(0,2) = dir[6]; this->matrix(1,2) = dir[7]; this->matrix(2,2) = dir[8];
   if ( this->spacingSetCheck && this->dimensionsSetCheck == true )
   {
-    SetIGTTransformFromMat( this->matrix );
+    SetIGTTransformFromMat();
   }
   else
   {
@@ -140,7 +194,7 @@ void TransformMatrix::SetDirectionFrom3Angles( double angles[3] )
 
   if ( this->spacingSetCheck && this->dimensionsSetCheck == true )
   {
-    SetIGTTransformFromMat( this->matrix );
+    SetIGTTransformFromMat();
   }
   else
   {
@@ -170,6 +224,21 @@ void TransformMatrix::SetSpacingForIGTMatrix( float spac[3] )
   this->spacing[1] = spac[1];
   this->spacing[2] = spac[2];
   this->spacingSetCheck = true;
+
+  return;
+
+}
+
+void TransformMatrix::MultiplyWith( mat multiplyMatrix, bool NeedsToSetIGTMatrix )
+{
+
+  mat tempMatrix;
+  tempMatrix = this->matrix * multiplyMatrix;
+  this->matrix = tempMatrix;
+  if (NeedsToSetIGTMatrix)
+  {
+    this->SetIGTTransformFromMat();
+  }
 
   return;
 

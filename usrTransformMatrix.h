@@ -20,12 +20,14 @@ class TransformMatrix
   void SetTransformFromDouble( double[16] );
   void SetTransformFromIGT( igtl::ImageMessage::Pointer );
   void SetOriginInTransform( float[3] );
+  void SetCentreOriginInTransform( float[3] );
   void SetDirectionInTransform( double[9] );
   void SetDimensionsForIGTMatrix( int[3] );
   void SetSpacingForIGTMatrix( float[3] );
   void SetDirectionFrom3Angles( double[3] );
-  void SetIGTTransformFromMat( mat );
+  void SetIGTTransformFromMat();
   void ShowMatrix();
+  void MultiplyWith( mat multiplyMatrix , bool NeedsToSetIGTMatrix = true );
 
   igtl::Matrix4x4 IGTMatrix;
 

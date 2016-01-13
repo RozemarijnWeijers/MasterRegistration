@@ -59,11 +59,12 @@ int main(int argc, char* argv[])
     double angles[3] = { 0, 0, 0};
     rotMat.Set3Angels( angles );
     float resliceOrigin[3] = {0, 0, 0};
+    rotMat.ShowMatrix();
     resliceVolume.SetResliceAxesWRTVolume( rotMat.matrixDouble );
     resliceVolume.SetOriginOfResliceWRTVolume( resliceOrigin );
     resliceVolume.ResliceVolume();
     resliceVolume.CreateITKReslice();
-    resliceVolume.reslicedImage.imageMatrix.ShowMatrix();
+    //resliceVolume.reslicedImage.imageMatrix.ShowMatrix();
 
     resliceVolume.reslicedImage.ConvertITKtoIGTImage();
     client1.imgMsg = resliceVolume.reslicedImage.imgMsg;
@@ -71,10 +72,9 @@ int main(int argc, char* argv[])
     client1.SendImage();
 
     ImageCropping cropReslice;
-    std::cerr << resliceVolume.reslicedImage.spacingImage[0] << std::endl;
     cropReslice.SetImage( &resliceVolume.reslicedImage );
-    int dsize[3] = {100, 100};
-    int dstart[3] = {250, 150};
+    int dsize[3] = {150, 75};
+    int dstart[3] = { 0, 0};
     cropReslice.SetCropSizeAndStart( dsize, dstart );
     cropReslice.CropImage();
     cropReslice.Convert2DImageTo3DVolume();

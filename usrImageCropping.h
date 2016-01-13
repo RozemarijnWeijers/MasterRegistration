@@ -34,4 +34,6 @@ class ImageCropping
   Image*                       inputImage;
   FilterImageType::Pointer     filter;
 
+  void SetImageMatrix();
+
 };

@@ -34,7 +34,8 @@ void Volume::SetParametersFromITK()// TransformMatrix ITKimageMatrix )
   dir[3] = direction[1][0]; dir[4] = direction[1][1]; dir[5] = direction[1][2];
   dir[6] = direction[2][0]; dir[7] = direction[2][1]; dir[8] = direction[2][2];
   this->volumeMatrix.SetDirectionInTransform( dir );
-  this->volumeMatrix.SetOriginInTransform( this->originVolume );
+
+  this->volumeMatrix.SetCentreOriginInTransform( this->originVolume );
 
   return;
 
@@ -106,7 +107,7 @@ void Volume::UpdateVolumeTransform( TransformMatrix updateMatrix )
 {
 
   this->volumeMatrix.matrix = updateMatrix.matrix;
-  this->volumeMatrix.SetIGTTransformFromMat( updateMatrix.matrix );
+  this->volumeMatrix.SetIGTTransformFromMat();
   VolumeType::DirectionType direction ;
   direction[0][0] = updateMatrix.matrix(0,0); direction[1][0] = updateMatrix.matrix(1,0); direction[2][0] = updateMatrix.matrix(2,0);
   direction[1][0] = updateMatrix.matrix(0,1); direction[1][1] = updateMatrix.matrix(1,1); direction[2][1] = updateMatrix.matrix(2,1);

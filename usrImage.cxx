@@ -90,8 +90,8 @@ int Image::ConvertITKtoIGTImage()
   this->imgMsg->SetDimensions( this->sizeImage );
   this->imgMsg->SetSpacing( this->spacingImage );
   this->imgMsg->SetScalarType( scalarType );
-  //this->imgMsg->SetOrigin( originIGT );
   this->imgMsg->SetMatrix( this->imageMatrix.IGTMatrix );
+  //this->imgMsg->SetOrigin( 0, 0, 0 );
   this->imgMsg->AllocateScalars();
 
   // Copy image data into ITK image
