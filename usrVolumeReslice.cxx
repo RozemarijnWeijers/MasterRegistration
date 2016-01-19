@@ -63,10 +63,10 @@ void VolumeReslice::SetResliceMatrix() // relative to volume
   transformMatrix1[8] = this->resliceMatrix.matrix(2 ,0); transformMatrix1[9] = this->resliceMatrix.matrix(2 ,1); transformMatrix1[10] = this->resliceMatrix.matrix(2 ,2); transformMatrix1[11] = this->resliceMatrix.matrix(2 ,3);
   this->resliceAxes->DeepCopy( transformMatrix1 );
 
-  this->resliceOrigin[0] = this->resliceMatrix.matrix(0,3);
-  this->resliceOrigin[1] = this->resliceMatrix.matrix(1,3);
-  this->resliceOrigin[2] = this->resliceMatrix.matrix(2,3);
-
+  this->resliceOrigin[0] = this->resliceMatrix.matrix(0,3);// this->resliceMatrix.IGTMatrix[0][3];//
+  this->resliceOrigin[1] = this->resliceMatrix.matrix(1,3);// this->resliceMatrix.IGTMatrix[1][3];//
+  this->resliceOrigin[2] = this->resliceMatrix.matrix(2,3);// this->resliceMatrix.IGTMatrix[2][3];//
+  std::cerr<< this->resliceOrigin[0] <<std::endl;
   /*double    volumeOrigin[3];
   this->volume->VTKReader->Update();
   this->volume->VTKReader->GetOutput()->GetOrigin( volumeOrigin );
@@ -160,13 +160,9 @@ void VolumeReslice::CreateITKReslice()
 
     this->reslicedImage.imageData->Graft( this->vtkImageToImageFilter->GetOutput() );
 
-    QuickView viewer;
+    /*QuickView viewer;
     viewer.AddImage( this->reslicedImage.imageData.GetPointer() ); // Need to do this because QuickView can't accept smart pointers
-    viewer.Visualize();
-
-
-    //this->reslicedImage.imageData->SetOrigin( this->resliceOrigin );
-    //this->reslicedImage.imageData->SetSpacing( this->resliceSpacing );
+    viewer.Visualize();*/
 
     //this->SetSpacingOfReslice();
     this->resliceMatrix.SetSpacingForIGTMatrix( this->resliceSpacing );
@@ -177,9 +173,8 @@ void VolumeReslice::CreateITKReslice()
     this->resliceMatrix.SetDimensionsForIGTMatrix( sizeImage );
     this->resliceMatrix.matrix = this->resliceMatrix.matrix;
     this->resliceMatrix.SetIGTTransformFromMat();
-    std::cerr<< tempSize[0]<< ", "<< tempSize[1] << ", "<< tempSize[2] <<std::endl;
-    std::cerr<< this->resliceSpacing [0]<< ", "<< this->resliceSpacing [1] << ", "<< this->resliceSpacing [2] <<std::endl;
-    this->resliceMatrix.ShowMatrix();
+   // std::cerr<<"reslicematrix"<<std::endl;
+    //this->resliceMatrix.ShowMatrix();
 
     // Set correct image parameters for the ITK image
 

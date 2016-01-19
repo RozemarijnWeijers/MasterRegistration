@@ -1,6 +1,7 @@
 #include "itkImage.h"
 #include "itkResampleImageFilter.h"
 #include <itkExtractImageFilter.h>
+#include "itkChangeInformationImageFilter.h"
 #include "usrImage.h"
 #include "usrVolume.h"
 #include "itkTileImageFilter.h"
@@ -23,6 +24,7 @@ class ImageCropping
   void SetCropSizeAndStart( int[2], int[2]);
   void CropImage();
   void Convert2DImageTo3DVolume();
+  void SetNumberofImages( int );
 
   Image                        croppedImage;
   Volume                       croppedVolume;
@@ -33,6 +35,7 @@ class ImageCropping
   ImageType::SizeType          desiredSize ;
   Image*                       inputImage;
   FilterImageType::Pointer     filter;
+  int                          number = 1;
 
   void SetImageMatrix();
 

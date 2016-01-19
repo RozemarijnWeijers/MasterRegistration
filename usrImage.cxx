@@ -16,6 +16,7 @@ Image::~Image()
 void Image::SetParametersFromIGT()
 {
 
+  //is this right?
   this->imgMsg->GetDimensions( this->sizeImage );
   this->imgMsg->GetOrigin( this->originImage );
   this->imgMsg->GetSpacing( this->spacingImage );
@@ -28,7 +29,7 @@ void Image::SetParametersFromIGT()
 
 }
 
-void Image::SetParametersFromITK( double origin3th, double spacing3th, TransformMatrix ITKimageMatrix ) //except fot the origin
+void Image::SetParametersFromITK( double origin3th, double spacing3th, TransformMatrix ITKimageMatrix )
 {
 
   ImageType::PointType           origin = this->imageData->GetOrigin();
@@ -91,7 +92,6 @@ int Image::ConvertITKtoIGTImage()
   this->imgMsg->SetSpacing( this->spacingImage );
   this->imgMsg->SetScalarType( scalarType );
   this->imgMsg->SetMatrix( this->imageMatrix.IGTMatrix );
-  //this->imgMsg->SetOrigin( 0, 0, 0 );
   this->imgMsg->AllocateScalars();
 
   // Copy image data into ITK image

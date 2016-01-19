@@ -15,7 +15,7 @@ Volume::~Volume()
 {
 }
 
-void Volume::SetParametersFromITK()// TransformMatrix ITKimageMatrix )
+void Volume::SetParametersFromITK()
 {
 
   VolumeType::SizeType      size = this->volumeData->GetLargestPossibleRegion().GetSize();
@@ -35,7 +35,7 @@ void Volume::SetParametersFromITK()// TransformMatrix ITKimageMatrix )
   dir[6] = direction[2][0]; dir[7] = direction[2][1]; dir[8] = direction[2][2];
   this->volumeMatrix.SetDirectionInTransform( dir );
 
-  this->volumeMatrix.SetCentreOriginInTransform( this->originVolume );
+  this->volumeMatrix.SetOriginInTransform( this->originVolume );
 
   return;
 
@@ -58,6 +58,7 @@ void Volume::ConvertITKtoIGTVolume()
   this->imgMsg->SetSpacing( this->spacingVolume );
   this->imgMsg->SetScalarType( scalarType );
   //this->imgMsg->SetOrigin( originIGT );
+  //this->imgMsg->SetDirection( this->volumeData->GetDirection() )
   this->imgMsg->SetMatrix( this->volumeMatrix.IGTMatrix );
   this->imgMsg->AllocateScalars();
   //convert transformMatrix
@@ -121,7 +122,7 @@ void Volume::UpdateVolumeTransform( TransformMatrix updateMatrix )
 
 }
 
-void Volume::CropVolume( int dStart[3], int dSize[3], Volume* croppedVolume )
+void Volume::CropVolume( int dStart[3], int dSize[3], Volume* croppedVolume ) // not finished
 {
 
   // Set parameters for desired image (reslice/ crop)
@@ -131,7 +132,6 @@ void Volume::CropVolume( int dStart[3], int dSize[3], Volume* croppedVolume )
   desiredSize[0] = dSize[0];    desiredSize[1] = dSize[1];      desiredSize[2] = dSize[2];
 
   VolumeType::RegionType        desiredRegion( desiredStart, desiredSize );
-  std::cout << "Desired Region: " << desiredRegion << std::endl;
 
   // Create cropping/reslice
   FilterType::Pointer           filter = FilterType::New();
@@ -156,6 +156,9 @@ void Volume::CropVolume( int dStart[3], int dSize[3], Volume* croppedVolume )
 
   croppedVolume->volumeData->SetSpacing( spacing );
   croppedVolume->volumeData->SetOrigin( originsliceVolume );
+  VolumeType::IndexType      start; start[0] = 0; start[1] = 0; start[2] = 0;
+  desiredRegion.SetIndex( start );
+  croppedVolume->volumeData->SetRegions( desiredRegion );
   croppedVolume->SetParametersFromITK();
 
   return;

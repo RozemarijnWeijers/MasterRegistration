@@ -30,8 +30,8 @@ class TransformMatrix
   void MultiplyWith( mat multiplyMatrix , bool NeedsToSetIGTMatrix = true );
 
   igtl::Matrix4x4 IGTMatrix;
-
   mat matrix;
+
   int dimensions[3];
   float spacing[3];
 
