@@ -56,6 +56,43 @@ void ImageRegistration::SetInitialMatrix( TransformMatrix matrix1 )
 
 }
 
+
+class CommandIteration : public itk::Command
+{
+
+public:
+  typedef CommandIteration   Self;
+  typedef itk::Command       Superclass;
+  typedef itk::SmartPointer<Self>  Pointer;
+  itkNewMacro( Self );
+protected:
+  CommandIteration() {};
+public:
+  typedef  itk::RegularStepGradientDescentOptimizer   OptimizerType;
+  typedef const OptimizerType*                        OptimizerPointer;
+
+  void Execute(itk::Object *caller, const itk::EventObject & event)
+  {
+    std::cerr << " stop ";
+    Execute( (const itk::Object *)caller, event);
+  }
+
+  void Execute(const itk::Object * object, const itk::EventObject & event)
+  {
+    OptimizerPointer optimizer = dynamic_cast< OptimizerPointer >( object );
+    if( ! itk::IterationEvent().CheckEvent( &event ) )
+    {
+      std::cerr << " stop ";
+      return;
+    }
+    std::cout << optimizer->GetCurrentIteration() << " : ";
+    std::cout << optimizer->GetValue() << " : ";
+    std::cout << optimizer->GetCurrentPosition() << std::endl;
+  }
+
+};
+
+
 void ImageRegistration::RegisterImages()
 {
 
@@ -85,6 +122,10 @@ void ImageRegistration::RegisterImages()
   // Set a stopping criterion
   this->optimizer->SetNumberOfIterations( 100 );
 
+  CommandIteration::Pointer observer = CommandIteration::New();
+  this->optimizer->AddObserver( itk::IterationEvent(), observer );
+
+  std::cerr<< "start registration"<< std::endl;
   try
   {
     this->registration->Update();
@@ -158,3 +199,4 @@ void ImageRegistration::CreateRegisteredImage()
   return;
 
 }
+

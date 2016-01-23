@@ -21,7 +21,7 @@ void ImageCropping::SetNumberofImages( int n )
 
 }
 
-void ImageCropping::SetCropSizeAndStart( int dSize[2], int dStart[2] )
+void ImageCropping::SetCropSizeAndStart( int dSize[2], float dStart[2] )
 {
 
   this->desiredStart[0] = dStart[0];  this->desiredStart[1] = dStart[1];
@@ -64,21 +64,16 @@ void ImageCropping::CropImage()
   double                        spacingSliceImage[3];
 
   float* spacing = this->inputImage->spacingImage;
-  float* start1 = this->inputImage->originImage;
+  double start1 = this->croppedImage.imageMatrix.matrix(2,3);
   spacingSliceImage[0] = spacing[0]; spacingSliceImage[1] = spacing[1]; spacingSliceImage[2] = spacing[2];
-  //originSliceImage[0] = start1[0] + desiredStart[0]; originSliceImage[1] = start1[1] + desiredStart[1];   originSliceImage[2] = start1[2] + desiredStart[2];
-
-
   this->croppedImage.imageData->SetSpacing( spacing );
-  //this->croppedImage.imageData->SetOrigin( originSliceImage );
   this->SetImageMatrix();
 
-  this->croppedImage.SetParametersFromITK( start1[2], spacingSliceImage[2], this->croppedImage.imageMatrix );
+  this->croppedImage.SetParametersFromITK( start1, spacingSliceImage[2], this->croppedImage.imageMatrix );
 
   /*QuickView viewer;
   viewer.AddImage( this->croppedImage.imageData.GetPointer() ); // Need to do this because QuickView can't accept smart pointers
   viewer.Visualize();*/
-
   return;
 
 }
@@ -117,18 +112,19 @@ void ImageCropping::Convert2DImageTo3DVolume()
 
   filter2DTo3D->SetLayout( layout );
 
-  unsigned int inputImageNumber = 0;
+  /*unsigned int inputImageNumber = 0;
   ImageType::Pointer inputImageTile;
 
   for (int i = 0; i < this->number ; i++)
     {
     inputImageTile = this->croppedImage.imageData;//[i];
-    inputImageTile->DisconnectPipeline();
-    filter2DTo3D->SetInput( inputImageNumber++, inputImageTile );
-    }
+    //inputImageTile->DisconnectPipeline();
+    filter2DTo3D->SetInput( inputImageNumber, inputImageTile );
+    inputImageNumber++;
+    }*/
 
-  //ImageType::Pointer input = this->croppedImage.imageData;
-  //filter2DTo3D->SetInput( 0, input );
+  ImageType::Pointer input = this->croppedImage.imageData;
+  filter2DTo3D->SetInput( 0, input );
 
   typedef unsigned char PixelType;
   const PixelType defaultValue = 128;
@@ -145,15 +141,23 @@ void ImageCropping::Convert2DImageTo3DVolume()
   translation[1] = this->croppedImage.imageMatrix.matrix(1,3);
   translation[2] = this->croppedImage.imageMatrix.matrix(2,3);
   VolumeType::PointType origin = filter2DTo3D->GetOutput()->GetOrigin();
-  origin += translation;
+  origin = translation;
   filterChange->SetOutputOrigin( origin );
   filterChange->ChangeOriginOn();
   filterChange->Update();
+
+
+  VolumeType::DirectionType direction;
+  direction[0][0] = this->croppedImage.imageMatrix.matrix(0,0);direction[1][0] = this->croppedImage.imageMatrix.matrix(0,1);direction[2][0] = this->croppedImage.imageMatrix.matrix(0,2);
+  direction[0][1] = this->croppedImage.imageMatrix.matrix(1,0);direction[1][1] = this->croppedImage.imageMatrix.matrix(1,1);direction[2][1] = this->croppedImage.imageMatrix.matrix(1,2);
+  direction[0][2] = this->croppedImage.imageMatrix.matrix(2,0);direction[1][2] = this->croppedImage.imageMatrix.matrix(2,1);direction[2][2] = this->croppedImage.imageMatrix.matrix(2,2);
+  filterChange->SetOutputDirection( direction );
+  filterChange->ChangeDirectionOn();
+  filterChange->Update();
+
   this->croppedVolume.volumeData = filterChange->GetOutput();
-  std::cerr<<translation[0]<<std::endl;
 
   this->croppedVolume.SetParametersFromITK();
-  //this->croppedVolume.volumeMatrix = this->croppedImage.imageMatrix;
 
   return;
 

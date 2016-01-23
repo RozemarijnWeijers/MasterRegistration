@@ -33,6 +33,7 @@ set( USR_SOURCES
 	usrTransformMatrix.cxx
 	usrVolumeCropping.cxx
 	usrImageCropping.cxx
+	usrRotationMatrix.cxx
 	)
 
 set( USR_HEADERS
@@ -45,6 +46,7 @@ set( USR_HEADERS
 	usrTransformMatrix.h
 	usrVolumeCropping.h
 	usrImageCropping.h
+	usrRotationMatrix.h
 	)
 
 add_library(usrLib ${USR_SOURCES} ${USR_HEADERS})

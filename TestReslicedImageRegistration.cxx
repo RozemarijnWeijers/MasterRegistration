@@ -1,24 +1,33 @@
 #include "usrClientIGT.h"
 #include "usrVolume.h"
 #include "usrImage.h"
-#include "usrImageRegistration.h"
+#include "usrVolumeRegistration.h"
+#include "usrTransformMatrix.h"
 #include "usrVolumeReslice.h"
+#include "usrVolumeCropping.h"
+#include "usrImageCropping.h"
+#include "usrRotationMatrix.h"
 
 int main(int argc, char* argv[]) // Why is this one slow? and why does it stop to recognize image messages after the first ca. 20?
 {
 
-  if (argc != 5) // check number of arguments
+  if (argc != 10) // check number of arguments
   {
     // If not correct, print usage
     std::cerr << "    <filenameVolume>    : Filename of Volume.nrrd"            << std::endl;
     std::cerr << "    <hostnameReceiver>  : IP or host name"                    << std::endl;
     std::cerr << "    <portReceiver>      : Port # (18944 default)"             << std::endl;
-    std::cerr << "    <SliceNumber>       : number"                             << std::endl;
+    std::cerr << "    <SliceAngle1>       : Angle (deg)"                        << std::endl;
+    std::cerr << "    <SliceAngle2        : Angle (deg)"                        << std::endl;
+    std::cerr << "    <SliceAngle3>       : Angle (deg)"                        << std::endl;
+    std::cerr << "    <SliceNumber1>      : number"                             << std::endl;
+    std::cerr << "    <SliceNumber2>      : number"                             << std::endl;
+    std::cerr << "    <SliceNumber3>      : number"                             << std::endl;
     exit(0);
   }
 
   // Load volume data (NRRD file)
-  char*     file = argv[1];
+  char*    file = argv[1];
   Volume   volume;
   volume.LoadVolume( file );
 
@@ -33,34 +42,54 @@ int main(int argc, char* argv[]) // Why is this one slow? and why does it stop t
   client1.SendImage();
 
   // Create images
-  //Image    fixedImage;
-  //Image    movingImage;
+  Image    fixedImage;
+  Image    movingImage;
 
-  // Test resliceImage volume, start point relative to volume coordinates (through which to slice)
-  float       dStart[3];
-  dStart[0]=0; dStart[1]=0; dStart[2]=atoi( argv[4] );
-  // Test matrix for reslicing axial
-  static double transformMatrix[9] = {
-            1, 0, 0,
-            0, 1, 0,
-            0, 0, 1};
+  VolumeReslice resliceVolume;
+  resliceVolume.SetVolume( &volume );
 
-  //resliceImageVolume(&volume, dStart, dSize, &sliceImage);
-  VolumeReslice volumeReslice;
-  volumeReslice.SetOriginOfResliceWRTVolume( dStart );
-  volumeReslice.SetResliceAxesWRTVolume( transformMatrix );
-  volumeReslice.SetVolume( &volume );
-  volumeReslice.ResliceVolume();
-  volumeReslice.CreateITKReslice();
-  //resliceImageVolumeVTK( volumeVTK.VTKreader, dStart, transformmatrix, &sliceImage );
+  // Reslice Volume for simulation of incoming slice
 
-  // Send the fixed image to Slicer
-  //volumeReslice.reslicedImage.ConvertITKtoIGTImage();
-  //client1.imgMsg = volumeReslice.reslicedImage.imgMsg;
-  //client1.imgMsg->SetDeviceName( "sliceImage" );
-  //client1.SendImage();
-  //clientIGT2.socket->Send( sliceImage.imgMsg->GetPackPointer(), sliceImage.imgMsg->GetPackSize() );
+  float sliceangle1 = atoi(argv[4]);
+  float sliceangle2 = atoi(argv[5]);
+  float sliceangle3 = atoi(argv[6]);
+  RotationMatrix rotMat;
+  double angles[3] = { sliceangle1, sliceangle2, sliceangle3};
+  rotMat.Set3Angels( angles );
+  float slicenumber1 = atoi(argv[7]);
+  float slicenumber2 = atoi(argv[8]);
+  float slicenumber3 = atoi(argv[9]);
+  float resliceOrigin[3] = {slicenumber1, slicenumber2, slicenumber3};
+  //std::cerr<< "rotmatrix"<< std::endl;
+  //rotMat.ShowMatrix();
+  resliceVolume.SetResliceAxesWRTVolume( rotMat.matrixDouble );
+  resliceVolume.SetOriginOfResliceWRTVolume( resliceOrigin );
+  resliceVolume.ResliceVolume();
+  resliceVolume.CreateITKReslice();
+  //resliceVolume.reslicedImage.imageMatrix.ShowMatrix();
 
+  resliceVolume.reslicedImage.ConvertITKtoIGTImage();
+  client1.imgMsg = resliceVolume.reslicedImage.imgMsg;
+  client1.imgMsg->SetDeviceName( "ReslicedImage" );
+  client1.SendImage();
+
+  //Crop resliced image
+  ImageCropping cropReslice;
+  double sizeim[2];
+  sizeim[0] = resliceVolume.reslicedImage.sizeImage[0];
+  sizeim[1] = resliceVolume.reslicedImage.sizeImage[1];
+  cropReslice.SetImage( &resliceVolume.reslicedImage );
+  int dsize[3] = {sizeim[0]/2, sizeim[1]/2};
+  float dstart[3] = {((sizeim[0]/2)-(dsize[0]/2))*resliceVolume.reslicedImage.spacingImage[0], ((sizeim[1]/2)-(dsize[1]/2))*resliceVolume.reslicedImage.spacingImage[1]};
+  cropReslice.SetCropSizeAndStart( dsize, dstart );
+  cropReslice.CropImage();
+  cropReslice.Convert2DImageTo3DVolume();
+
+  cropReslice.croppedVolume.ConvertITKtoIGTVolume();
+  cropReslice.croppedImage.ConvertITKtoIGTImage();
+  client1.imgMsg = cropReslice.croppedVolume.imgMsg;
+  client1.imgMsg->SetDeviceName( "CroppedImage" );
+  client1.SendImage();
   // Create a message buffer to receive header and image message
   /*igtl::MessageHeader::Pointer headerMsg = igtl::MessageHeader::New();
 

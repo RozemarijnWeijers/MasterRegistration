@@ -3,7 +3,7 @@
 RotationMatrix::RotationMatrix()
 {
 
-  this->matrix.eye(4,4);
+  this->matrix.eye(3,3);
   this->matrixDouble[0] = 1; this->matrixDouble[1] = 0; this->matrixDouble[2] = 0;
   this->matrixDouble[3] = 0; this->matrixDouble[4] = 1; this->matrixDouble[5] = 0;
   this->matrixDouble[6] = 0; this->matrixDouble[7] = 0; this->matrixDouble[8] = 1;

@@ -14,7 +14,7 @@ typedef itk::ResampleImageFilter< VolumeType, VolumeType >                    Re
 typedef itk::VersorRigid3DTransform< double >                                 TransformType3D;
 typedef itk::VersorRigid3DTransformOptimizer                                  OptimizerType3D;
 typedef itk::MeanSquaresImageToImageMetric< VolumeType, VolumeType >          MetricType3D;
-typedef itk::LinearInterpolateImageFunction< VolumeType, double >            InterpolatorType3D;
+typedef itk::LinearInterpolateImageFunction< VolumeType, double >             InterpolatorType3D;
 typedef itk::ImageRegistrationMethod< VolumeType, VolumeType >                RegistrationType3D;
 typedef RegistrationType3D::ParametersType                                    ParametersType3D;
 

@@ -40,28 +40,16 @@ int main(int argc, char* argv[])
     Volume    fixedVolume;
     Volume    movingVolume;
 
-    /*TransformMatrix movementMatrix;
-    TransformType3D::Pointer transformMovement = TransformType3D::New();
-    typedef TransformType3D::VersorType  VersorType;
-    typedef VersorType::VectorType     VectorType;
-    VersorType     rotation;
-    VectorType     axis;
-    double angle;
-    axis[0] = 0.0;      axis[1] = 0.0;      axis[2] = 1.0;
-    typedef TransformType3D::OffsetType OffsetType;
-    OffsetType offset;
-    rotation.Set(  axis, angle  );
-    transformMovement->SetRotation( rotation );*/
     VolumeReslice resliceVolume;
     resliceVolume.SetVolume( &volume );
-    //resliceVolume.SetSpacingOfReslice();
-    //resliceVolume.SetOriginOfReslice();
+
+    // Reslice Volume for simulation of incoming slice
     RotationMatrix rotMat;
     double angles[3] = { 0, 0, 0};
     rotMat.Set3Angels( angles );
-    float resliceOrigin[3] = {0, 0, 50};
-    std::cerr<< "rotmatrix"<< std::endl;
-    rotMat.ShowMatrix();
+    float resliceOrigin[3] = {0, 0, 30.05};
+    //std::cerr<< "rotmatrix"<< std::endl;
+    //rotMat.ShowMatrix();
     resliceVolume.SetResliceAxesWRTVolume( rotMat.matrixDouble );
     resliceVolume.SetOriginOfResliceWRTVolume( resliceOrigin );
     resliceVolume.ResliceVolume();
@@ -73,10 +61,11 @@ int main(int argc, char* argv[])
     client1.imgMsg->SetDeviceName( "Volume1" );
     client1.SendImage();
 
+    //Crop resliced image
     ImageCropping cropReslice;
     cropReslice.SetImage( &resliceVolume.reslicedImage );
-    int dsize[3] = {100, 100};
-    int dstart[3] = { 60, 50};
+    int dsize[3] = {200, 200};
+    float dstart[3] = { 30, 10};
     cropReslice.SetCropSizeAndStart( dsize, dstart );
     cropReslice.CropImage();
     cropReslice.Convert2DImageTo3DVolume();
@@ -87,8 +76,9 @@ int main(int argc, char* argv[])
     client1.imgMsg->SetDeviceName( "Volume2" );
     client1.SendImage();
 
-    int marge = 0;
-    int margez = 4;
+    // take volume around the tracker data to register with the cropped reslice
+    int marge = 20;
+    int margez = 14;
     int volumeCropSize[3] = { dsize[0]+marge, dsize[1]+marge, margez };
     int volumeCropOrigin[3] = { (resliceOrigin[0]+dstart[0])/volume.spacingVolume[0]-(marge/2), (resliceOrigin[1]+dstart[1])/volume.spacingVolume[1]-(marge/2), (resliceOrigin[2])/volume.spacingVolume[2]-(margez/2)};
     Volume CroppedVolume;
@@ -105,16 +95,21 @@ int main(int argc, char* argv[])
     // Start registration of the resliced images with other resliced volume of the area around it (5 slices before and 5 after) to find the best match
     typedef TransformType3D::ParametersType ParametersType;
     ParametersType    finalParameters;
-    double            initMat[16] = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, marge/2, marge/2, margez/2, 1};
+    // Set initial matrix (tracker data)
+    //double  initMat[16] = {1, 0, 0, marge/2, 0, 1, 0, marge/2, 0, 0, 1, margez/2, 0, 0, 0, 1};
+    double  initMat[16] = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
     TransformMatrix   initialMatrix;
     initialMatrix.SetTransformFromDouble( initMat );
+    std::cout<< "initial matrix:" << std::endl;
+    initialMatrix.ShowMatrix();
 
     fixedVolume = cropReslice.croppedVolume;//CroppedVolume;
+
     movingVolume = CroppedVolume;//cropReslice.croppedVolume;
-    std::cerr<<movingVolume.volumeData->GetLargestPossibleRegion()<<std::endl;
+    /*std::cerr<<movingVolume.volumeData->GetLargestPossibleRegion()<<std::endl;
     std::cerr<<movingVolume.volumeData->GetOrigin()<<std::endl;
     std::cerr<<fixedVolume.volumeData->GetLargestPossibleRegion()<<std::endl;
-    std::cerr<<fixedVolume.volumeData->GetOrigin()<<std::endl;
+    std::cerr<<fixedVolume.volumeData->GetOrigin()<<std::endl;*/
     VolumeRegistration registration;
     registration.SetFixedVolume( &fixedVolume );
     // Register the moving and the fixed image and save th emetric values to find the best match

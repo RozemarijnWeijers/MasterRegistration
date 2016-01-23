@@ -5,6 +5,7 @@
 #include "itkResampleImageFilter.h"
 #include "itkRescaleIntensityImageFilter.h"
 #include "itkAffineTransform.h"
+#include "itkCommand.h"
 #include <itkExtractImageFilter.h>
 #include "usrImage.h"
 #include "usrVolume.h"

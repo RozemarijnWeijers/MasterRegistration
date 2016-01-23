@@ -55,6 +55,40 @@ void VolumeRegistration::SetInitialMatrix( TransformMatrix matrix1 )
 
 }
 
+
+class CommandIteration : public itk::Command
+{
+
+public:
+  typedef CommandIteration   Self;
+  typedef itk::Command       Superclass;
+  typedef itk::SmartPointer<Self>  Pointer;
+  itkNewMacro( Self );
+protected:
+  CommandIteration() {};
+public:
+  typedef  itk::VersorRigid3DTransformOptimizer   OptimizerType;
+  typedef const OptimizerType*                    OptimizerPointer;
+
+  void Execute(itk::Object *caller, const itk::EventObject & event)
+  {
+    Execute( (const itk::Object *)caller, event);
+  }
+
+  void Execute(const itk::Object * object, const itk::EventObject & event)
+  {
+    OptimizerPointer optimizer = dynamic_cast< OptimizerPointer >( object );
+    if( ! itk::IterationEvent().CheckEvent( &event ) )
+    {
+      return;
+    }
+    std::cout << optimizer->GetCurrentIteration() << " : ";
+    std::cout << optimizer->GetValue() << " : ";
+    std::cout << optimizer->GetCurrentPosition() << std::endl;
+  }
+
+};
+
 void VolumeRegistration::RegisterVolumes()
 {
 
@@ -64,30 +98,36 @@ void VolumeRegistration::RegisterVolumes()
   this->registration->SetFixedImageRegion( this->fixedVolume->volumeData->GetLargestPossibleRegion() );
 
   //  Initialize the transform
-  typedef itk::CenteredTransformInitializer< TransformType3D, VolumeType, VolumeType >  TransformInitializerType;
+  /*typedef itk::CenteredTransformInitializer< TransformType3D, VolumeType, VolumeType >  TransformInitializerType;
   TransformInitializerType::Pointer initializer = TransformInitializerType::New();
   initializer->SetTransform(   transform );
   initializer->SetFixedImage(  this->fixedVolume->volumeData );
   initializer->SetMovingImage( this->movingVolume->volumeData );
   initializer->MomentsOn();
-  initializer->InitializeTransform();
+  initializer->InitializeTransform();*/
 
   typedef TransformType3D::VersorType  VersorType;
   typedef VersorType::VectorType     VectorType;
-  VersorType     rotation;
-  VectorType     axis;
+  typedef TransformType3D::TranslationType TranslationType;
+  VersorType      rotation;
+  VectorType      axis;
+  TranslationType translation;
   axis[0] = 0.0;
   axis[1] = 0.0;
   axis[2] = 1.0;
   const double angle = 0;
   rotation.Set(  axis, angle  );
   transform->SetRotation( rotation );
+  translation[0] = 0;//this->initialMatrix[3];
+  translation[1] = 0;//this->initialMatrix[7];
+  translation[2] = 0;//this->initialMatrix[11];
+  transform->SetTranslation(translation);
 
   this->registration->SetInitialTransformParameters( transform->GetParameters() );
 
   typedef OptimizerType3D::ScalesType       OptimizerScalesType;
   OptimizerScalesType optimizerScales( transform->GetNumberOfParameters() );
-  const double translationScale = 1.0 / 1000.0;
+  const double translationScale = 1 / 1000.0;
   optimizerScales[0] = 1.0;
   optimizerScales[1] = 1.0;
   optimizerScales[2] = 1.0;
@@ -95,12 +135,15 @@ void VolumeRegistration::RegisterVolumes()
   optimizerScales[4] = translationScale;
   optimizerScales[5] = translationScale;
   optimizer->SetScales( optimizerScales );
-  optimizer->SetMaximumStepLength( 0.2000  );
-  optimizer->SetMinimumStepLength( 0.0001 );
-  optimizer->SetNumberOfIterations( 200 );
+  this->optimizer->SetMaximumStepLength( 0.1  );
+  this->optimizer->SetMinimumStepLength( 0.005 );
+
 
   // Set a stopping criterion
-  this->optimizer->SetNumberOfIterations( 100 );
+  this->optimizer->SetNumberOfIterations( 150 );
+
+  CommandIteration::Pointer observer = CommandIteration::New();
+  this->optimizer->AddObserver( itk::IterationEvent(), observer );
 
   try
   {

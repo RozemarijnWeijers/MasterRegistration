@@ -21,7 +21,7 @@ class ImageCropping
   ~ImageCropping();
 
   void SetImage( Image* );
-  void SetCropSizeAndStart( int[2], int[2]);
+  void SetCropSizeAndStart( int[2], float[2]);
   void CropImage();
   void Convert2DImageTo3DVolume();
   void SetNumberofImages( int );
@@ -35,7 +35,7 @@ class ImageCropping
   ImageType::SizeType          desiredSize ;
   Image*                       inputImage;
   FilterImageType::Pointer     filter;
-  int                          number = 1;
+  int                          number;// = 1;
 
   void SetImageMatrix();
 

@@ -126,6 +126,8 @@ void VolumeReslice::ResliceVolume()
     this->reslice->SetResliceAxes( this->resliceAxes );
     this->reslice->SetInterpolationModeToLinear();
     this->reslice->Update();
+    double sliceSpacing = this->reslice->GetOutput()->GetSpacing()[2];
+    std::cerr << sliceSpacing<< std::endl;
     this->resliceDoneCheck = true;
 
     return;
