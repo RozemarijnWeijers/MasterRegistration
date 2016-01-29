@@ -118,9 +118,9 @@ void VolumeRegistration::RegisterVolumes()
   const double angle = 0;
   rotation.Set(  axis, angle  );
   transform->SetRotation( rotation );
-  translation[0] = 0;//this->initialMatrix[3];
-  translation[1] = 0;//this->initialMatrix[7];
-  translation[2] = 0;//this->initialMatrix[11];
+  translation[0] = 0;
+  translation[1] = 0;
+  translation[2] = 0;
   transform->SetTranslation(translation);
 
   this->registration->SetInitialTransformParameters( transform->GetParameters() );
@@ -128,26 +128,35 @@ void VolumeRegistration::RegisterVolumes()
   typedef OptimizerType3D::ScalesType       OptimizerScalesType;
   OptimizerScalesType optimizerScales( transform->GetNumberOfParameters() );
   const double translationScale = 1 / 1000.0;
-  optimizerScales[0] = 1.0;
-  optimizerScales[1] = 1.0;
-  optimizerScales[2] = 1.0;
-  optimizerScales[3] = translationScale;
-  optimizerScales[4] = translationScale;
-  optimizerScales[5] = translationScale;
+  optimizerScales[0] = 1.0;//100000;
+  optimizerScales[1] = 1.0;//100000;
+  optimizerScales[2] = 1.0;//100000;
+  optimizerScales[3] = translationScale/1;
+  optimizerScales[4] = translationScale/1;
+  optimizerScales[5] = translationScale/1;
   optimizer->SetScales( optimizerScales );
-  this->optimizer->SetMaximumStepLength( 0.1  );
-  this->optimizer->SetMinimumStepLength( 0.005 );
+  this->optimizer->SetMaximumStepLength( 0.50  );//in mm?
+  this->optimizer->SetMinimumStepLength( 0.0005 ); //in mm?
 
+  this->metric->SetNumberOfSpatialSamples(500000);
 
   // Set a stopping criterion
-  this->optimizer->SetNumberOfIterations( 150 );
+  this->optimizer->SetNumberOfIterations( 500 );
 
   CommandIteration::Pointer observer = CommandIteration::New();
   this->optimizer->AddObserver( itk::IterationEvent(), observer );
 
+
+
   try
   {
+    high_resolution_clock::time_point t1 = high_resolution_clock::now();
+
     this->registration->Update();
+
+    high_resolution_clock::time_point t2 = high_resolution_clock::now();
+    auto duration = duration_cast<microseconds>( t2 - t1 ).count();
+    std::cout << "Duration: " << duratioin << std::endl;
   }
   catch( itk::ExceptionObject & err )
   {
@@ -157,10 +166,7 @@ void VolumeRegistration::RegisterVolumes()
   }
 
   // Create registered version of moving Volume
-  /*if ( 0 == this->CreateRegisteredVolume() )
-  {
-    std::cerr << "Registering Volume failed" << std::endl;
-  }*/
+  this->CreateRegisteredVolume();
 
   //  The result of the registration process is an array of parameters that defines the spatial transformation in an unique way. This final result is obtained using the \code{GetLastTransformParameters()} method.
   OptimizerType3D::ParametersType finalParameters = registration->GetLastTransformParameters();
@@ -170,8 +176,8 @@ void VolumeRegistration::RegisterVolumes()
   const double finalTranslationX    = finalParameters[3];
   const double finalTranslationY    = finalParameters[4];
   const double finalTranslationZ    = finalParameters[5];
-  const unsigned int numberOfIterations = optimizer->GetCurrentIteration();
-  const double bestValue = optimizer->GetValue();
+  const unsigned int numberOfIterations = this->optimizer->GetCurrentIteration();
+  const double bestValue = this->optimizer->GetValue();
 
   std::cout << std::endl << std::endl;
   std::cout << "Result = " << std::endl;
@@ -184,13 +190,7 @@ void VolumeRegistration::RegisterVolumes()
   std::cout << " Iterations    = " << numberOfIterations << std::endl;
   std::cout << " Metric value  = " << bestValue          << std::endl;
 
-
-  //his->metricValue = this->optimizer->GetValue();
-
-  //std::cout << "Final parameters 2D/2D-Registration: " << finalParameters << std::endl;
-
-  //  The value of the Volume metric corresponding to the last set of parameters can be obtained with the \code{GetValue()} method of the optimizer.
-  //std::cout << "Metric value: " << this->optimizer->GetValue() << std::endl;
+  std::cerr<<this->registration->GetTransform()[0]<< std::endl;
 
   return;
 
@@ -216,18 +216,18 @@ void VolumeRegistration::CreateRegisteredVolume()
   this->resampler->SetTransform( this->registration->GetOutput()->Get() );
 
   // Specifying parameters of the output Volume (default pixel value is set to gray in order to highlight the regions that are mapped outside of the moving Volume)
-  this->resampler->SetSize( this->fixedVolume->volumeData->GetLargestPossibleRegion().GetSize() );
-  this->resampler->SetOutputOrigin( this->fixedVolume->volumeData->GetOrigin() );
-  this->resampler->SetOutputSpacing( this->fixedVolume->volumeData->GetSpacing() );
-  this->resampler->SetOutputDirection( this->fixedVolume->volumeData->GetDirection() );
+  this->resampler->SetOutputOrigin( this->movingVolume->volumeData->GetOrigin() );
+  this->resampler->SetOutputSpacing( this->movingVolume->volumeData->GetSpacing() );
+  this->resampler->SetSize( this->movingVolume->volumeData->GetLargestPossibleRegion().GetSize() );
   this->resampler->SetDefaultPixelValue( 0 );
   this->resampler->Update();
 
   // Create registered ITKVolume'
   this->registeredVolume.volumeData = this->resampler->GetOutput();
-  this->registeredVolume.volumeData->SetOrigin(this->fixedVolume->volumeData->GetOrigin());
-  this->registeredVolume.volumeData->SetSpacing(this->fixedVolume->volumeData->GetSpacing());
+  this->registeredVolume.volumeData->SetOrigin(this->movingVolume->volumeData->GetOrigin());
+  this->registeredVolume.volumeData->SetSpacing(this->movingVolume->volumeData->GetSpacing());
   this->registeredVolume.SetParametersFromITK();
+
 
   return;
 

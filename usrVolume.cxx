@@ -122,7 +122,7 @@ void Volume::UpdateVolumeTransform( TransformMatrix updateMatrix )
 
 }
 
-void Volume::CropVolume( int dStart[3], int dSize[3], Volume* croppedVolume ) // not finished
+void Volume::CropVolume( float dStart[3], int dSize[3], Volume* croppedVolume ) // not finished
 {
 
   // Set parameters for desired image (reslice/ crop)

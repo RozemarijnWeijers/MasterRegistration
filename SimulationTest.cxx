@@ -80,7 +80,7 @@ int main(int argc, char* argv[])
     int marge = 20;
     int margez = 14;
     int volumeCropSize[3] = { dsize[0]+marge, dsize[1]+marge, margez };
-    int volumeCropOrigin[3] = { (resliceOrigin[0]+dstart[0])/volume.spacingVolume[0]-(marge/2), (resliceOrigin[1]+dstart[1])/volume.spacingVolume[1]-(marge/2), (resliceOrigin[2])/volume.spacingVolume[2]-(margez/2)};
+    float volumeCropOrigin[3] = { (resliceOrigin[0]+dstart[0])/volume.spacingVolume[0]-(marge/2), (resliceOrigin[1]+dstart[1])/volume.spacingVolume[1]-(marge/2), (resliceOrigin[2])/volume.spacingVolume[2]-(margez/2)};
     Volume CroppedVolume;
     volume.CropVolume( volumeCropOrigin, volumeCropSize, &CroppedVolume );
 

@@ -25,7 +25,7 @@ class Volume
   void ConvertITKtoIGTVolume();
   int LoadVolume( char* );
   void UpdateVolumeTransform( TransformMatrix );
-  void CropVolume( int[3], int[3], Volume* );
+  void CropVolume( float[3], int[3], Volume* );
 
   VolumeType::Pointer volumeData;
   vtkSmartPointer<vtkNrrdReader> VTKReader;

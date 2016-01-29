@@ -8,21 +8,27 @@
 #include "usrImageCropping.h"
 #include "usrRotationMatrix.h"
 
+#include "itkResampleImageFilter.h"
+#include "itkTranslationTransform.h"
+#include <itkCenteredAffineTransform.h>
+
 int main(int argc, char* argv[]) // Why is this one slow? and why does it stop to recognize image messages after the first ca. 20?
 {
 
-  if (argc != 10) // check number of arguments
+  if (argc != 12) // check number of arguments
   {
     // If not correct, print usage
     std::cerr << "    <filenameVolume>    : Filename of Volume.nrrd"            << std::endl;
     std::cerr << "    <hostnameReceiver>  : IP or host name"                    << std::endl;
     std::cerr << "    <portReceiver>      : Port # (18944 default)"             << std::endl;
-    std::cerr << "    <SliceAngle1>       : Angle (deg)"                        << std::endl;
-    std::cerr << "    <SliceAngle2        : Angle (deg)"                        << std::endl;
-    std::cerr << "    <SliceAngle3>       : Angle (deg)"                        << std::endl;
     std::cerr << "    <SliceNumber1>      : number"                             << std::endl;
-    std::cerr << "    <SliceNumber2>      : number"                             << std::endl;
-    std::cerr << "    <SliceNumber3>      : number"                             << std::endl;
+    std::cerr << "    <Translation1>      : mm "                                << std::endl;
+    std::cerr << "    <Translation2>      : mm "                                << std::endl;
+    std::cerr << "    <Translation3>      : mm  "                               << std::endl;
+    std::cerr << "    <SliceAngle>        : degree"                             << std::endl;
+    std::cerr << "    <SliceAngle>        : degree"                             << std::endl;
+    std::cerr << "    <SliceAngle>        : degree"                             << std::endl;
+    std::cerr << "    <thickness>         : pixels"                             << std::endl;
     exit(0);
   }
 
@@ -38,74 +44,240 @@ int main(int argc, char* argv[]) // Why is this one slow? and why does it stop t
   // Send volume to slicer
   volume.ConvertITKtoIGTVolume();
   client1.imgMsg = volume.imgMsg;
-  client1.imgMsg->SetDeviceName( "volume" );
+  client1.imgMsg->SetDeviceName( "Volume" );
   client1.SendImage();
 
   // Create images
-  Image    fixedImage;
-  Image    movingImage;
+  Volume*    fixedImage;
+  Volume*    movingImage;
 
   VolumeReslice resliceVolume;
   resliceVolume.SetVolume( &volume );
+  Volume CroppedVolumeSlice;
 
-  // Reslice Volume for simulation of incoming slice
+  double angles[3] = { 0, 0, 0};
+  if (angles[0] == 0 && angles[1] == 0 && angles[2] == 0)
+  {
+      float slicenumber1 = 0;
+      float slicenumber2 = 0;
+      float slicenumber3 = volume.sizeVolume[2]/2;//atoi(argv[4]);
 
-  float sliceangle1 = atoi(argv[4]);
-  float sliceangle2 = atoi(argv[5]);
-  float sliceangle3 = atoi(argv[6]);
-  RotationMatrix rotMat;
-  double angles[3] = { sliceangle1, sliceangle2, sliceangle3};
-  rotMat.Set3Angels( angles );
-  float slicenumber1 = atoi(argv[7]);
-  float slicenumber2 = atoi(argv[8]);
-  float slicenumber3 = atoi(argv[9]);
-  float resliceOrigin[3] = {slicenumber1, slicenumber2, slicenumber3};
-  //std::cerr<< "rotmatrix"<< std::endl;
-  //rotMat.ShowMatrix();
-  resliceVolume.SetResliceAxesWRTVolume( rotMat.matrixDouble );
-  resliceVolume.SetOriginOfResliceWRTVolume( resliceOrigin );
-  resliceVolume.ResliceVolume();
-  resliceVolume.CreateITKReslice();
-  //resliceVolume.reslicedImage.imageMatrix.ShowMatrix();
+      float resliceOrigin[3];
+      resliceOrigin[0] = slicenumber1;
+      resliceOrigin[1] = slicenumber2;
+      resliceOrigin[2] = slicenumber3;
 
-  resliceVolume.reslicedImage.ConvertITKtoIGTImage();
-  client1.imgMsg = resliceVolume.reslicedImage.imgMsg;
-  client1.imgMsg->SetDeviceName( "ReslicedImage" );
+      RotationMatrix rotMat;
+      rotMat.Set3Angels( angles );
+
+      resliceVolume.SetResliceAxesWRTVolume( rotMat.matrixDouble );
+      resliceVolume.SetOriginOfResliceWRTVolume( resliceOrigin );
+      resliceVolume.ResliceVolume();
+      resliceVolume.CreateITKReslice();
+
+      resliceVolume.reslicedImage.ConvertITKtoIGTImage();
+      client1.imgMsg = resliceVolume.reslicedImage.imgMsg;
+      client1.imgMsg->SetDeviceName( "ReslicedImage" );
+      client1.SendImage();
+
+      //Crop resliced image
+      ImageCropping cropReslice;
+      cropReslice.SetImage( &resliceVolume.reslicedImage );
+
+      int marge = 20;
+      int volumeCropSize[3]; // in pixels
+      volumeCropSize[0] = resliceVolume.reslicedImage.sizeImage[0]-marge;
+      volumeCropSize[1] = resliceVolume.reslicedImage.sizeImage[1]-marge;
+      volumeCropSize[2] = 1;
+
+      float volumeCropOrigin[3];
+      float dstart[2] = { marge*resliceVolume.reslicedImage.spacingImage[0]/2 , marge*resliceVolume.reslicedImage.spacingImage[1]/2 };//in mmm
+      volumeCropOrigin[0] = resliceOrigin[0] + dstart[0];
+      volumeCropOrigin[1] = resliceOrigin[1] + dstart[1];
+      volumeCropOrigin[2] = resliceOrigin[2];
+
+      cropReslice.SetCropSizeAndStart( volumeCropSize, volumeCropOrigin );
+      cropReslice.CropImage();
+
+      cropReslice.Convert2DImageTo3DVolume();
+      CroppedVolumeSlice = cropReslice.croppedVolume;
+
+      cropReslice.croppedVolume.ConvertITKtoIGTVolume();
+      cropReslice.croppedImage.ConvertITKtoIGTImage();
+      client1.imgMsg = cropReslice.croppedVolume.imgMsg;
+      client1.imgMsg->SetDeviceName( "CroppedImage" );
+      client1.SendImage();
+  }
+  /*if (sliceangle3 == 90 )
+  {
+      int s[3] = {(volume.sizeVolume[0]-50), 1, (volume.sizeVolume[2]-25)};
+      volumeCropSize[0] = s[0]; volumeCropSize[1] = s[1]; volumeCropSize[2] = s[2];
+      volumeCropOrigin[0] = volume.originVolume[0] + 20; volumeCropOrigin[1] = atoi(argv[7]); volumeCropOrigin[2] =volume.originVolume[0] + 10;
+      //int volumeCropSize[3] = { 160, 40, 65};//cropReslice.croppedVolume.sizeVolume[0]+marge, cropReslice.croppedVolume.sizeVolume[2]+marge, cropReslice.croppedVolume.sizeVolume[1]+marge};
+      //float volumeCropOrigin[3] = {20, 50,5};// (resliceOrigin[0]+dstart[0])/volume.spacingVolume[0]-(marge/2), (resliceOrigin[2])/volume.spacingVolume[2]-(marge/2), (resliceOrigin[1]+dstart[1])/volume.spacingVolume[1]-(marge/2)};
+
+      volume.CropVolume( volumeCropOrigin, volumeCropSize, &CroppedVolumeSlice );
+
+      CroppedVolumeSlice.ConvertITKtoIGTVolume();
+      client1.imgMsg = CroppedVolumeSlice.imgMsg;
+      client1.imgMsg->SetDeviceName( "CroppedImage" );
+      client1.SendImage();
+  }
+  if (sliceangle2 == -90 )
+  {
+      int s[3] = { 1,volume.sizeVolume[1]-50, volume.sizeVolume[2]-50 };
+      volumeCropSize[0] = s[0]; volumeCropSize[1] = s[1]; volumeCropSize[2] = s[2];
+      volumeCropOrigin[0] = atoi(argv[7]); volumeCropOrigin[1] = volume.originVolume[1] + 20; volumeCropOrigin[2] =volume.originVolume[0] + 20;
+
+      //int volumeCropSize[3] = { 160, 40, 65};//cropReslice.croppedVolume.sizeVolume[0]+marge, cropReslice.croppedVolume.sizeVolume[2]+marge, cropReslice.croppedVolume.sizeVolume[1]+marge};
+      //float volumeCropOrigin[3] = {20, 50,5};// (resliceOrigin[0]+dstart[0])/volume.spacingVolume[0]-(marge/2), (resliceOrigin[2])/volume.spacingVolume[2]-(marge/2), (resliceOrigin[1]+dstart[1])/volume.spacingVolume[1]-(marge/2)};
+
+      volume.CropVolume( volumeCropOrigin, volumeCropSize, &CroppedVolumeSlice );
+
+      CroppedVolumeSlice.ConvertITKtoIGTVolume();
+      client1.imgMsg = CroppedVolumeSlice.imgMsg;
+      client1.imgMsg->SetDeviceName( "CroppedImage" );
+      client1.SendImage();
+  }*/
+
+
+  /*typedef itk::TranslationTransform<double,3> TranslationTransformType;
+  TranslationTransformType::Pointer translationtransform = TranslationTransformType::New();
+  TranslationTransformType::OutputVectorType tTranslation;
+  tTranslation[0] = atoi(argv[4]); // in mm?
+  tTranslation[1] = atoi(argv[5]); // in mm?
+  tTranslation[2] = atoi(argv[6]); // in mm?
+  translationtransform->Translate(tTranslation);*/
+
+  TransformType3D::Pointer movetransform = TransformType3D::New();
+  typedef TransformType3D::VersorType VersorType;
+  typedef VersorType::VectorType VectorType;
+  typedef TransformType3D::TranslationType TranslationType;
+  VersorType      rotation;
+  VectorType      axis;
+  TranslationType translation;
+
+  double angle;
+  double rad2grad = PI/180;
+  if (atoi(argv[8]) != 0 )
+  {
+      axis[0] = 0.0;
+      axis[1] = 0.0;
+      axis[2] = 1.0;
+      angle = atoi(argv[8]) * rad2grad;
+      rotation.Set(axis,angle);
+      movetransform->SetRotation(rotation);
+  }
+  if (atoi(argv[9]) != 0 )
+  {
+      axis[0] = 0.0;
+      axis[1] = 1.0;
+      axis[2] = 0.0;
+      angle = atoi(argv[9]) * rad2grad;
+      rotation.Set(axis,angle);
+      movetransform->SetRotation(rotation);
+  }
+  if (atoi(argv[10]) != 0 )
+  {
+      axis[0] = 1.0;
+      axis[1] = 0.0;
+      axis[2] = 0.0;
+      angle = atoi(argv[10]) * rad2grad;
+      rotation.Set(axis,angle);
+      movetransform->SetRotation(rotation);
+  }
+
+  translation[0] = atoi(argv[5]);
+  translation[1] = atoi(argv[6]);
+  translation[2] = atoi(argv[7]);
+  movetransform->SetTranslation(translation);
+
+  typedef itk::ResampleImageFilter<VolumeType, VolumeType> ResampleVolumeFilterType;
+  ResampleVolumeFilterType::Pointer resampleVolumeFilter = ResampleVolumeFilterType::New();
+  resampleVolumeFilter->SetTransform(movetransform.GetPointer());
+  resampleVolumeFilter->SetInput(volume.volumeData);
+
+  double spacingVol[ 3 ];
+  spacingVol[0] = volume.spacingVolume[0];
+  spacingVol[1] = volume.spacingVolume[1];
+  spacingVol[2] = volume.spacingVolume[2];
+  resampleVolumeFilter->SetOutputSpacing( spacingVol );
+
+  double originVol[ 3 ];
+  originVol[0] = volume.originVolume[0];
+  originVol[1] = volume.originVolume[1];
+  originVol[2] = volume.originVolume[2];
+  resampleVolumeFilter->SetOutputOrigin( originVol );
+
+  VolumeType::SizeType   sizeVol = volume.volumeData->GetLargestPossibleRegion().GetSize();
+  resampleVolumeFilter->SetSize( sizeVol );
+
+  resampleVolumeFilter->Update();
+
+  Volume Movedvolume;
+  Movedvolume.volumeData = resampleVolumeFilter->GetOutput();
+  Movedvolume.SetParametersFromITK();
+
+  Movedvolume.ConvertITKtoIGTVolume();
+  client1.imgMsg = Movedvolume.imgMsg;
+  client1.imgMsg->SetDeviceName( "MovedVolume" );
   client1.SendImage();
 
-  //Crop resliced image
-  ImageCropping cropReslice;
-  double sizeim[2];
-  sizeim[0] = resliceVolume.reslicedImage.sizeImage[0];
-  sizeim[1] = resliceVolume.reslicedImage.sizeImage[1];
-  cropReslice.SetImage( &resliceVolume.reslicedImage );
-  int dsize[3] = {sizeim[0]/2, sizeim[1]/2};
-  float dstart[3] = {((sizeim[0]/2)-(dsize[0]/2))*resliceVolume.reslicedImage.spacingImage[0], ((sizeim[1]/2)-(dsize[1]/2))*resliceVolume.reslicedImage.spacingImage[1]};
-  cropReslice.SetCropSizeAndStart( dsize, dstart );
-  cropReslice.CropImage();
-  cropReslice.Convert2DImageTo3DVolume();
+  /*MoveTransformType::InputPointType center;
+  center[0] = (volume2.originVolume[0] + (volume2.sizeVolume[0] / 2.0)) * volume2.spacingVolume[0];
+  center[1] = (volume2.originVolume[1] + (volume2.sizeVolume[1] / 2.0)) * volume2.spacingVolume[1] ;
+  center[2] = (volume2.originVolume[2] + (volume2.sizeVolume[2] / 2.0)) * volume2.spacingVolume[2] ;
 
-  cropReslice.croppedVolume.ConvertITKtoIGTVolume();
-  cropReslice.croppedImage.ConvertITKtoIGTImage();
-  client1.imgMsg = cropReslice.croppedVolume.imgMsg;
-  client1.imgMsg->SetDeviceName( "CroppedImage" );
+  movetransform->SetCenter(center);
+  const double degreesToRadians = atan(1.0) / 45.0;
+
+  const double angle1 = atoi(argv[8]) * degreesToRadians;
+  MoveTransformType::OutputVectorType axis1;
+  axis1[0] = 1;
+  axis1[1] = 0;
+  axis1[2] = 0;
+  const double angle2 = atoi(argv[9]) * degreesToRadians;
+  MoveTransformType::OutputVectorType axis2;
+  axis2[0] = 0;
+  axis2[1] = 1;
+  axis2[2] = 0;
+  const double angle3 = atoi(argv[10]) * degreesToRadians;
+  MoveTransformType::OutputVectorType axis3;
+  axis3[0] = 0;
+  axis3[1] = 0;
+  axis3[2] = 1;
+
+  //movetransform->ComputeOffset();
+  movetransform->Rotate3D( axis1, angle1, false );
+  movetransform->Rotate3D( axis2, angle2, false );
+  movetransform->Rotate3D( axis3, angle3, false );*/
+
+  int marges[3] = { 2*20, 2*20, atoi(argv[11]) }; //in pixels
+  int volumeCropSize[3] = {volume.sizeVolume[0] - marges[0], volume.sizeVolume[1] - marges[1], marges[2]};
+  float volumeCropOrigin[3] = {volume.originVolume[0] + (marges[0]/2), volume.originVolume[1] + (marges[1]/2), volume.sizeVolume[2]/2 - (marges[2]/2)};
+
+  Volume CroppedVolume;
+  volume.CropVolume( volumeCropOrigin, volumeCropSize, &CroppedVolume );
+
+  CroppedVolume.ConvertITKtoIGTVolume();
+  client1.imgMsg = CroppedVolume.imgMsg;
+  client1.imgMsg->SetDeviceName( "CroppedVolume" );
   client1.SendImage();
-  // Create a message buffer to receive header and image message
-  /*igtl::MessageHeader::Pointer headerMsg = igtl::MessageHeader::New();
 
-  // Allocate a time stamp, WHERE IS THIS USED?????????
-  igtl::TimeStamp::Pointer ts = igtl::TimeStamp::New();
-  // Receive first image
-  ReceiveImage( &clientIGT1, &fixedImage, ts, headerMsg, fixedImage.imgMsg );*/
+  fixedImage = &CroppedVolume;//&CroppedVolumeSlice;
+  movingImage = &Movedvolume;//&CroppedVolume;
 
+  VolumeRegistration registration;
+  registration.SetFixedVolume( fixedImage );
+  registration.SetMovingVolume( movingImage );
+  registration.RegisterVolumes();
 
-  /*clientIGT1.ReceiveImage();
-  fixedImage.imgMsg = clientIGT1.imgMsg;
-  fixedImage.SetParametersFromIGT();
-  fixedImage.ConvertIGTtoITKImage();
+  registration.registeredVolume.ConvertITKtoIGTVolume();
+  client1.imgMsg = registration.registeredVolume.imgMsg;
+  client1.imgMsg->SetDeviceName( "VolumeRegistered" );
+  client1.SendImage();
 
-  ImageRegistration registration;
-  double initialMatrix[9];
+  /*double initialMatrix[9];
 
   while ( 1 )
   {
@@ -113,10 +285,6 @@ int main(int argc, char* argv[]) // Why is this one slow? and why does it stop t
     {
       if ( clientIGT1.ReceiveImage() == 0 )
       {
-        movingImage.imgMsg = clientIGT1.imgMsg;
-        movingImage.SetParametersFromIGT();
-        movingImage.ConvertIGTtoITKImage();
-
         // Make sure to have two different images
         if ( fixedImage.imgMsg == movingImage.imgMsg )
         {
@@ -129,8 +297,7 @@ int main(int argc, char* argv[]) // Why is this one slow? and why does it stop t
         initialMatrix[3] = 0; initialMatrix[4] = 1; initialMatrix[5] = 0;
         initialMatrix[6] = 0; initialMatrix[7] = 0; initialMatrix[8] = 1;
 
-        registration.SetFixedImage( &fixedImage );
-        registration.SetMovingImage( &movingImage );
+
         //registration.SetInitialMatrix( initialMatrix );
         registration.RegisterImages();
         //registrationRegistrationFunction( &fixedImage, &movingImage, &registeredImage );
