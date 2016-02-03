@@ -80,7 +80,7 @@ void TransformMatrix::SetIGTTransformFromMat()
       tempMat1(0,3) = originIGT[0];
       tempMat1(1,3) = originIGT[1];
       tempMat1(2,3) = originIGT[2];
-      tempMat3 = MultiplyMatrixAWithB(tempMat1, tempMat2 );
+      tempMat3 = MultiplyMatrixAWithB( tempMat1, tempMat2 );
 
       this->IGTMatrix[0][0] = this->matrix(0,0); this->IGTMatrix[0][1] = this->matrix(0,1); this->IGTMatrix[0][2] = this->matrix(0,2); this->IGTMatrix[0][3] = tempMat3(0,3);
       this->IGTMatrix[1][0] = this->matrix(1,0); this->IGTMatrix[1][1] = this->matrix(1,1); this->IGTMatrix[1][2] = this->matrix(1,2); this->IGTMatrix[1][3] = tempMat3(1,3);
@@ -96,13 +96,19 @@ void TransformMatrix::SetIGTTransformFromMat()
 
 }
 
-void TransformMatrix::SetOriginInTransform( float origin[3] )
+void TransformMatrix::SetOriginInTransform( float origin[3], bool RAS )
 {
 
-  //dimensions!!
   this->matrix(0,3) = origin[0];
   this->matrix(1,3) = origin[1];
   this->matrix(2,3) = origin[2];
+  //dimensions!!
+  if (RAS == false)
+  {
+      this->matrix(0,3) = -origin[0];//LPS
+      this->matrix(1,3) = -origin[1];//LPS
+      this->matrix(2,3) = origin[2];
+  }
 
   if ( this->spacingSetCheck && this->dimensionsSetCheck == true )
   {
@@ -152,11 +158,22 @@ void TransformMatrix::SetCentreOriginInTransform( float centreOrigin[3] )
 
 }
 
-void TransformMatrix::SetDirectionInTransform( double dir[9] )
+void TransformMatrix::SetDirectionInTransform( double dir[9], bool RAS )
 {
   this->matrix(0,0) = dir[0]; this->matrix(1,0) = dir[1]; this->matrix(2,0) = dir[2];
   this->matrix(0,1) = dir[3]; this->matrix(1,1) = dir[4]; this->matrix(2,1) = dir[5];
   this->matrix(0,2) = dir[6]; this->matrix(1,2) = dir[7]; this->matrix(2,2) = dir[8];
+
+  //LPS
+  if (RAS == false)
+  {
+      mat tempMat4;
+      mat tempMat5;
+      tempMat4 = eye(4,4); tempMat4(0,0) = -1; tempMat4(1,1) = -1;
+      tempMat5 = MultiplyMatrixAWithB(this->matrix, tempMat4);
+      this->matrix = tempMat5;
+  }
+
   if ( this->spacingSetCheck && this->dimensionsSetCheck == true )
   {
     SetIGTTransformFromMat();

@@ -15,7 +15,7 @@ Volume::~Volume()
 {
 }
 
-void Volume::SetParametersFromITK()
+void Volume::SetParametersFromITK( bool RAS )
 {
 
   VolumeType::SizeType      size = this->volumeData->GetLargestPossibleRegion().GetSize();
@@ -30,10 +30,10 @@ void Volume::SetParametersFromITK()
 
   VolumeType::DirectionType direction = this->volumeData->GetDirection();
   double dir[9];
-  dir[0] = direction[0][0]; dir[1] = direction[0][1]; dir[2] = direction[0][2];
-  dir[3] = direction[1][0]; dir[4] = direction[1][1]; dir[5] = direction[1][2];
-  dir[6] = direction[2][0]; dir[7] = direction[2][1]; dir[8] = direction[2][2];
-  this->volumeMatrix.SetDirectionInTransform( dir );
+  dir[0] = direction[0][0]; dir[1] = direction[1][0]; dir[2] = direction[2][0];
+  dir[3] = direction[0][1]; dir[4] = direction[1][1]; dir[5] = direction[2][1];
+  dir[6] = direction[0][2]; dir[7] = direction[1][2]; dir[8] = direction[2][2];
+  this->volumeMatrix.SetDirectionInTransform( dir, RAS );
 
   this->volumeMatrix.SetOriginInTransform( this->originVolume );
 
@@ -57,9 +57,9 @@ void Volume::ConvertITKtoIGTVolume()
   this->imgMsg->SetDimensions( this->sizeVolume );
   this->imgMsg->SetSpacing( this->spacingVolume );
   this->imgMsg->SetScalarType( scalarType );
-  //this->imgMsg->SetOrigin( originIGT );
   //this->imgMsg->SetDirection( this->volumeData->GetDirection() )
   this->imgMsg->SetMatrix( this->volumeMatrix.IGTMatrix );
+  //this->imgMsg->SetOrigin( this->originVolume );
   this->imgMsg->AllocateScalars();
   //convert transformMatrix
 

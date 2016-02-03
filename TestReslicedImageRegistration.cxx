@@ -264,7 +264,7 @@ int main(int argc, char* argv[]) // Why is this one slow? and why does it stop t
   client1.imgMsg->SetDeviceName( "CroppedVolume" );
   client1.SendImage();
 
-  fixedImage = &CroppedVolume;//&CroppedVolumeSlice;
+  fixedImage = &CroppedVolumeSlice;//&CroppedVolume;//
   movingImage = &Movedvolume;//&CroppedVolume;
 
   VolumeRegistration registration;

@@ -21,7 +21,7 @@ class Volume
   Volume();
   ~Volume();
 
-  void SetParametersFromITK();// TransformMatrix );
+  void SetParametersFromITK( bool = false );// TransformMatrix );
   void ConvertITKtoIGTVolume();
   int LoadVolume( char* );
   void UpdateVolumeTransform( TransformMatrix );

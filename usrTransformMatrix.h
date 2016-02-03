@@ -19,9 +19,9 @@ class TransformMatrix
 
   void SetTransformFromDouble( double[16] );
   void SetTransformFromIGT( igtl::ImageMessage::Pointer );
-  void SetOriginInTransform( float[3] );
+  void SetOriginInTransform( float[3], bool = false );
   void SetCentreOriginInTransform( float[3] );
-  void SetDirectionInTransform( double[9] );
+  void SetDirectionInTransform( double[9], bool = false );
   void SetDimensionsForIGTMatrix( int[3] );
   void SetSpacingForIGTMatrix( float[3] );
   void SetDirectionFrom3Angles( double[3] );

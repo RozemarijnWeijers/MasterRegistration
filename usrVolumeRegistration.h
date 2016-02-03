@@ -10,6 +10,8 @@
 #include "usrVolume.h"
 #include "usrTransformMatrix.h"
 
+#include "itkTranslationTransform.h"
+
 typedef itk::ResampleImageFilter< VolumeType, VolumeType >                    ResampleFilterType3D;
 typedef itk::VersorRigid3DTransform< double >                                 TransformType3D;
 typedef itk::VersorRigid3DTransformOptimizer                                  OptimizerType3D;

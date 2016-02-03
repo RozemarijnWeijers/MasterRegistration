@@ -1,4 +1,5 @@
 #include "usrVolumeRegistration.h"
+ #include <time.h>
 
 VolumeRegistration::VolumeRegistration()
 {
@@ -117,28 +118,28 @@ void VolumeRegistration::RegisterVolumes()
   axis[2] = 1.0;
   const double angle = 0;
   rotation.Set(  axis, angle  );
-  transform->SetRotation( rotation );
+  this->transform->SetRotation( rotation );
   translation[0] = 0;
   translation[1] = 0;
   translation[2] = 0;
-  transform->SetTranslation(translation);
+  this->transform->SetTranslation(translation);
 
-  this->registration->SetInitialTransformParameters( transform->GetParameters() );
+  this->registration->SetInitialTransformParameters( this->transform->GetParameters() );
 
-  typedef OptimizerType3D::ScalesType       OptimizerScalesType;
-  OptimizerScalesType optimizerScales( transform->GetNumberOfParameters() );
+  typedef OptimizerType3D::ScalesType OptimizerScalesType;
+  OptimizerScalesType optimizerScales( this->transform->GetNumberOfParameters() );
   const double translationScale = 1 / 1000.0;
-  optimizerScales[0] = 1.0;//100000;
-  optimizerScales[1] = 1.0;//100000;
-  optimizerScales[2] = 1.0;//100000;
-  optimizerScales[3] = translationScale/1;
-  optimizerScales[4] = translationScale/1;
-  optimizerScales[5] = translationScale/1;
+  optimizerScales[0] = 1.0/1;
+  optimizerScales[1] = 1.0/1;
+  optimizerScales[2] = 1.0/1;
+  optimizerScales[3] = translationScale/10000;
+  optimizerScales[4] = translationScale/10000;
+  optimizerScales[5] = translationScale/10000;
   optimizer->SetScales( optimizerScales );
   this->optimizer->SetMaximumStepLength( 0.50  );//in mm?
   this->optimizer->SetMinimumStepLength( 0.0005 ); //in mm?
 
-  this->metric->SetNumberOfSpatialSamples(500000);
+  this->metric->SetNumberOfSpatialSamples(50000);
 
   // Set a stopping criterion
   this->optimizer->SetNumberOfIterations( 500 );
@@ -147,16 +148,14 @@ void VolumeRegistration::RegisterVolumes()
   this->optimizer->AddObserver( itk::IterationEvent(), observer );
 
 
-
   try
   {
-    high_resolution_clock::time_point t1 = high_resolution_clock::now();
+    clock_t time = clock();
 
     this->registration->Update();
+    clock_t time2 = clock();
 
-    high_resolution_clock::time_point t2 = high_resolution_clock::now();
-    auto duration = duration_cast<microseconds>( t2 - t1 ).count();
-    std::cout << "Duration: " << duratioin << std::endl;
+    printf("\nTime taken: %.4fs\n", (float)(time2 - time)/double(CLOCKS_PER_SEC));
   }
   catch( itk::ExceptionObject & err )
   {
@@ -190,7 +189,7 @@ void VolumeRegistration::RegisterVolumes()
   std::cout << " Iterations    = " << numberOfIterations << std::endl;
   std::cout << " Metric value  = " << bestValue          << std::endl;
 
-  std::cerr<<this->registration->GetTransform()[0]<< std::endl;
+  std::cerr<< this->registration->GetTransform()[0]<< std::endl;
 
   return;
 
@@ -211,9 +210,16 @@ void VolumeRegistration::CreateRegisteredVolume()
 
   // Set moving Volume as input
   this->resampler->SetInput( this->movingVolume->volumeData );
+  typedef itk::TranslationTransform<double,3> TranslationTransformType;
+  TranslationTransformType::Pointer ttransform = TranslationTransformType::New();
+  TranslationTransformType::OutputVectorType translation;
+  translation[0] = 0;
+  translation[1] = 0;
+  translation[2] = 0;
+  ttransform->Translate(translation);
 
   // The Transform produced by the Registration method is passed into the resampling filter
-  this->resampler->SetTransform( this->registration->GetOutput()->Get() );
+  this->resampler->SetTransform( ttransform.GetPointer());//this->registration->GetOutput()->Get()->GetPointer());
 
   // Specifying parameters of the output Volume (default pixel value is set to gray in order to highlight the regions that are mapped outside of the moving Volume)
   this->resampler->SetOutputOrigin( this->movingVolume->volumeData->GetOrigin() );
@@ -226,8 +232,8 @@ void VolumeRegistration::CreateRegisteredVolume()
   this->registeredVolume.volumeData = this->resampler->GetOutput();
   this->registeredVolume.volumeData->SetOrigin(this->movingVolume->volumeData->GetOrigin());
   this->registeredVolume.volumeData->SetSpacing(this->movingVolume->volumeData->GetSpacing());
-  this->registeredVolume.SetParametersFromITK();
-
+  this->registeredVolume.SetParametersFromITK( true );
+  std::cout<<this->registeredVolume.volumeData->GetLargestPossibleRegion()<<std::endl;
 
   return;
 

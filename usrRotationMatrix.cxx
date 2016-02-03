@@ -11,7 +11,9 @@ RotationMatrix::RotationMatrix()
 }
 
 RotationMatrix::~RotationMatrix()
-{}
+{
+
+}
 
 void RotationMatrix::Set3Angels( double angles[3] )
 {
