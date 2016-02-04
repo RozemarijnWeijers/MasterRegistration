@@ -19,7 +19,7 @@ class Image
   int   ConvertIGTtoITKImage();
   int   ConvertITKtoIGTImage();
   void  SetParametersFromIGT();
-  void  SetParametersFromITK( double, double, TransformMatrix );
+  void  SetParametersFromITK( double, double, TransformMatrix, bool RAS = false );
 
   ImageType::Pointer            imageData;
   igtl::ImageMessage::Pointer   imgMsg;

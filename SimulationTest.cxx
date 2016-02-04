@@ -65,5 +65,42 @@ int main(int argc, char* argv[]) // Why is this one slow? and why does it stop t
   client1.imgMsg = registration.registeredVolume.imgMsg;
   client1.imgMsg->SetDeviceName( "VolumeRegistered" );
   client1.SendImage();
+
+  TransformType3D::Pointer movetransform = TransformType3D::New();
+  typedef TransformType3D::VersorType VersorType;
+  typedef VersorType::VectorType VectorType;
+  typedef TransformType3D::TranslationType TranslationType;
+  VersorType      rotation;
+  VectorType      axis;
+  TranslationType translation;
+
+  translation[0] = 5;
+  translation[1] = 0;
+  translation[2] = 0;
+  movetransform->SetTranslation(translation);
+
+
+  typedef itk::ResampleImageFilter<VolumeType, VolumeType> ResampleVolumeFilterType;
+  ResampleVolumeFilterType::Pointer resampleVolumeFilter = ResampleVolumeFilterType::New();
+  resampleVolumeFilter->SetTransform(movetransform.GetPointer());
+  resampleVolumeFilter->SetInput(movedVolume.volumeData);
+
+  resampleVolumeFilter->SetOutputSpacing( movedVolume.volumeData->GetSpacing() );
+  resampleVolumeFilter->SetOutputOrigin( movedVolume.volumeData->GetOrigin() );
+  resampleVolumeFilter->SetOutputDirection( movedVolume.volumeData->GetDirection() );
+
+  VolumeType::SizeType   sizeVol = movedVolume.volumeData->GetLargestPossibleRegion().GetSize();
+  resampleVolumeFilter->SetSize( sizeVol );
+
+  resampleVolumeFilter->Update();
+
+  Volume Movedvolume2;
+  Movedvolume2.volumeData = resampleVolumeFilter->GetOutput();
+  Movedvolume2.SetParametersFromITK();
+
+  Movedvolume2.ConvertITKtoIGTVolume();
+  client1.imgMsg = Movedvolume2.imgMsg;
+  client1.imgMsg->SetDeviceName( "MovedVolume2" );
+  client1.SendImage();
   }
 

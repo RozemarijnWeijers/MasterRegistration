@@ -186,6 +186,19 @@ void TransformMatrix::SetDirectionInTransform( double dir[9], bool RAS )
   return;
 }
 
+void TransformMatrix::SetLPS()
+{
+
+  mat tempmat1;
+  tempmat1 = eye(4,4);
+  tempmat1(0,0) = -1; tempmat1(1,1) = -1;
+
+  this->MultiplyWith( tempmat1 );
+
+  return;
+
+}
+
 void TransformMatrix::SetDirectionFrom3Angles( double angles[3] )
 {
 

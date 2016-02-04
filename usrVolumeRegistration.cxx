@@ -132,17 +132,17 @@ void VolumeRegistration::RegisterVolumes()
   optimizerScales[0] = 1.0/1;
   optimizerScales[1] = 1.0/1;
   optimizerScales[2] = 1.0/1;
-  optimizerScales[3] = translationScale/10000;
-  optimizerScales[4] = translationScale/10000;
-  optimizerScales[5] = translationScale/10000;
+  optimizerScales[3] = translationScale/1000000;
+  optimizerScales[4] = translationScale/1000000;
+  optimizerScales[5] = translationScale/1000000;
   optimizer->SetScales( optimizerScales );
   this->optimizer->SetMaximumStepLength( 0.50  );//in mm?
-  this->optimizer->SetMinimumStepLength( 0.0005 ); //in mm?
+  this->optimizer->SetMinimumStepLength( 0.005 ); //in mm?
 
-  this->metric->SetNumberOfSpatialSamples(50000);
+  this->metric->SetNumberOfSpatialSamples(500000);
 
   // Set a stopping criterion
-  this->optimizer->SetNumberOfIterations( 500 );
+  this->optimizer->SetNumberOfIterations( 100 );
 
   CommandIteration::Pointer observer = CommandIteration::New();
   this->optimizer->AddObserver( itk::IterationEvent(), observer );
@@ -165,6 +165,7 @@ void VolumeRegistration::RegisterVolumes()
   }
 
   // Create registered version of moving Volume
+
   this->CreateRegisteredVolume();
 
   //  The result of the registration process is an array of parameters that defines the spatial transformation in an unique way. This final result is obtained using the \code{GetLastTransformParameters()} method.
@@ -209,30 +210,38 @@ void VolumeRegistration::CreateRegisteredVolume()
 {
 
   // Set moving Volume as input
-  this->resampler->SetInput( this->movingVolume->volumeData );
-  typedef itk::TranslationTransform<double,3> TranslationTransformType;
-  TranslationTransformType::Pointer ttransform = TranslationTransformType::New();
-  TranslationTransformType::OutputVectorType translation;
-  translation[0] = 0;
+
+
+  TransformType3D::Pointer movetransform = TransformType3D::New();
+  typedef TransformType3D::VersorType VersorType;
+  typedef VersorType::VectorType VectorType;
+  typedef TransformType3D::TranslationType TranslationType;
+  VersorType      rotation;
+  VectorType      axis;
+  TranslationType translation;
+
+  translation[0] = 5;
   translation[1] = 0;
   translation[2] = 0;
-  ttransform->Translate(translation);
+  movetransform->SetTranslation(translation);
 
   // The Transform produced by the Registration method is passed into the resampling filter
-  this->resampler->SetTransform( ttransform.GetPointer());//this->registration->GetOutput()->Get()->GetPointer());
+  this->resampler->SetTransform( this->registration->GetOutput()->Get());
+  this->resampler->SetInput( this->movingVolume->volumeData );
 
   // Specifying parameters of the output Volume (default pixel value is set to gray in order to highlight the regions that are mapped outside of the moving Volume)
   this->resampler->SetOutputOrigin( this->movingVolume->volumeData->GetOrigin() );
   this->resampler->SetOutputSpacing( this->movingVolume->volumeData->GetSpacing() );
   this->resampler->SetSize( this->movingVolume->volumeData->GetLargestPossibleRegion().GetSize() );
-  this->resampler->SetDefaultPixelValue( 0 );
+  this->resampler->SetOutputDirection( this->movingVolume->volumeData->GetDirection() );
+  //this->resampler->SetDefaultPixelValue( 0 );
   this->resampler->Update();
 
   // Create registered ITKVolume'
-  this->registeredVolume.volumeData = this->resampler->GetOutput();
-  this->registeredVolume.volumeData->SetOrigin(this->movingVolume->volumeData->GetOrigin());
-  this->registeredVolume.volumeData->SetSpacing(this->movingVolume->volumeData->GetSpacing());
-  this->registeredVolume.SetParametersFromITK( true );
+  this->registeredVolume.volumeData =resampler->GetOutput();
+  //this->registeredVolume.volumeData->SetOrigin(this->movingVolume->volumeData->GetOrigin());
+  //this->registeredVolume.volumeData->SetSpacing(this->movingVolume->volumeData->GetSpacing());
+  this->registeredVolume.SetParametersFromITK();
   std::cout<<this->registeredVolume.volumeData->GetLargestPossibleRegion()<<std::endl;
 
   return;

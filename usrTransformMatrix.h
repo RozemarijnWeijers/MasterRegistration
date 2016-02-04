@@ -28,6 +28,7 @@ class TransformMatrix
   void SetIGTTransformFromMat();
   void ShowMatrix();
   void MultiplyWith( mat multiplyMatrix , bool NeedsToSetIGTMatrix = true );
+  void SetLPS();
 
   igtl::Matrix4x4 IGTMatrix;
   mat matrix;

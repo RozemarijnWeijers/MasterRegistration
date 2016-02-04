@@ -64,7 +64,7 @@ void VolumeCropping::CropVolume()
   this->croppedVolume.volumeMatrix.SetDimensionsForIGTMatrix( tempSize );
   this->croppedVolume.volumeMatrix.SetSpacingForIGTMatrix( spacing );
   this->croppedVolume.volumeMatrix.SetOriginInTransform( originSliceImage );
-  this->croppedVolume.SetParametersFromITK();//( originSliceImage[2], spacingSliceImage[2], croppedVolume.volumeMatrix );
+  this->croppedVolume.SetParametersFromITK( true );//( originSliceImage[2], spacingSliceImage[2], croppedVolume.volumeMatrix );
 
   return;
 

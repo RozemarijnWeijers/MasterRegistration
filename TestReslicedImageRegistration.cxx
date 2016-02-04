@@ -197,17 +197,9 @@ int main(int argc, char* argv[]) // Why is this one slow? and why does it stop t
   resampleVolumeFilter->SetTransform(movetransform.GetPointer());
   resampleVolumeFilter->SetInput(volume.volumeData);
 
-  double spacingVol[ 3 ];
-  spacingVol[0] = volume.spacingVolume[0];
-  spacingVol[1] = volume.spacingVolume[1];
-  spacingVol[2] = volume.spacingVolume[2];
-  resampleVolumeFilter->SetOutputSpacing( spacingVol );
-
-  double originVol[ 3 ];
-  originVol[0] = volume.originVolume[0];
-  originVol[1] = volume.originVolume[1];
-  originVol[2] = volume.originVolume[2];
-  resampleVolumeFilter->SetOutputOrigin( originVol );
+  resampleVolumeFilter->SetOutputSpacing( volume.volumeData->GetSpacing() );
+  resampleVolumeFilter->SetOutputOrigin( volume.volumeData->GetOrigin() );
+  resampleVolumeFilter->SetOutputDirection( volume.volumeData->GetDirection() );
 
   VolumeType::SizeType   sizeVol = volume.volumeData->GetLargestPossibleRegion().GetSize();
   resampleVolumeFilter->SetSize( sizeVol );
@@ -264,7 +256,7 @@ int main(int argc, char* argv[]) // Why is this one slow? and why does it stop t
   client1.imgMsg->SetDeviceName( "CroppedVolume" );
   client1.SendImage();
 
-  fixedImage = &CroppedVolumeSlice;//&CroppedVolume;//
+  fixedImage = &CroppedVolumeSlice;//&CroppedVolume;//&CroppedVolumeSlice;//
   movingImage = &Movedvolume;//&CroppedVolume;
 
   VolumeRegistration registration;

@@ -180,7 +180,7 @@ void VolumeReslice::CreateITKReslice()
 
     // Set correct image parameters for the ITK image
 
-    this->reslicedImage.SetParametersFromITK(this->resliceOrigin[2], this->resliceSpacing[2], this->resliceMatrix); //Set spacing and origin in imageData
+    this->reslicedImage.SetParametersFromITK(this->resliceOrigin[2], this->resliceSpacing[2], this->resliceMatrix ); //Set spacing and origin in imageData
 
   }
   else
