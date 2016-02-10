@@ -22,35 +22,12 @@ void TransformMatrix::SetTransformFromDouble( double transformMatrix[16] )
                << transformMatrix[8] << transformMatrix[9] << transformMatrix[10] << transformMatrix[11] << endr
                << transformMatrix[12] << transformMatrix[13] << transformMatrix[14] << transformMatrix[15] << endr;
 
-  this->SetIGTTransformFromMat();
+  //this->SetIGTTransformFromMat();
 
   return;
 
 }
 
-void TransformMatrix::SetTransformFromIGT( igtl::ImageMessage::Pointer imgMsg )
-{
-
-  double originITK[3];
-  imgMsg->GetMatrix( this->IGTMatrix );
-  imgMsg->GetSpacing( this->spacing );
-  imgMsg->GetDimensions( this->dimensions );
-  for ( int i=0; i<3; i++)
-  {
-    originITK[i] = this->IGTMatrix[i][3]-((this->dimensions[i]-1)*spacing[i]/2);
-  }
-
-  float transformD[16];
-  transformD[0] = this->IGTMatrix[0][0]; transformD[1] = this->IGTMatrix[0][1]; transformD[2] = this->IGTMatrix[0][2]; transformD[3] = originITK[0];
-  transformD[4] = this->IGTMatrix[1][0]; transformD[5] = this->IGTMatrix[1][1]; transformD[6] = this->IGTMatrix[1][2]; transformD[7] = originITK[1];
-  transformD[8] = this->IGTMatrix[2][0] ; transformD[9] = this->IGTMatrix[2][1];transformD[10] = this->IGTMatrix[2][2]; transformD[11] = originITK[2];
-  transformD[12] = this->IGTMatrix[3][0]; transformD[13] = this->IGTMatrix[3][1];transformD[14] = this->IGTMatrix[3][2]; transformD[15] = this->IGTMatrix[3][3];
-
-  this->SetTransformFromDouble( (double*)transformD );
-
-  return;
-
-}
 
 mat MultiplyMatrixAWithB( mat matrixA, mat matrixB )
 {
@@ -59,6 +36,44 @@ mat MultiplyMatrixAWithB( mat matrixA, mat matrixB )
   tempMatrix = matrixB * matrixA;
 
   return tempMatrix;
+
+}
+
+void TransformMatrix::SetTransformFromIGT( igtl::ImageMessage::Pointer imgMsg )
+{
+
+  imgMsg->GetMatrix( this->IGTMatrix );
+  imgMsg->GetSpacing( this->spacing );
+  imgMsg->GetDimensions( this->dimensions );
+
+  this->matrix << this->IGTMatrix[0][0] << this->IGTMatrix[0][1] << this->IGTMatrix[0][2] << this->IGTMatrix[0][3] << endr
+               << this->IGTMatrix[1][0] << this->IGTMatrix[1][1] << this->IGTMatrix[1][2] << this->IGTMatrix[1][3] << endr
+               << this->IGTMatrix[2][0] << this->IGTMatrix[2][1] << this->IGTMatrix[2][2] << this->IGTMatrix[2][3] << endr
+               << this->IGTMatrix[3][0] << this->IGTMatrix[3][1] << this->IGTMatrix[3][2] << this->IGTMatrix[3][3] << endr;
+
+  //this->SetLPS();
+  mat tempMat1;
+  mat tempMat2;
+  mat tempMat3;
+  tempMat1 = eye(4,4);
+  double originITK[3];
+  tempMat2 = this->matrix;
+
+  for ( int i=0; i<3; i++)
+  {
+    originITK[i] = -((this->dimensions[i]-1)*this->spacing[i]/2);
+  }
+
+  tempMat1(0,3) = originITK[0];
+  tempMat1(1,3) = originITK[1];
+  tempMat1(2,3) = originITK[2];
+  tempMat3 = MultiplyMatrixAWithB( tempMat1, tempMat2 );
+
+  this->matrix = tempMat3;
+  this->SetIGTTransformFromMat();
+
+
+  return;
 
 }
 

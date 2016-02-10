@@ -132,14 +132,14 @@ void VolumeRegistration::RegisterVolumes()
   optimizerScales[0] = 1.0/1;
   optimizerScales[1] = 1.0/1;
   optimizerScales[2] = 1.0/1;
-  optimizerScales[3] = translationScale/1000000;
-  optimizerScales[4] = translationScale/1000000;
-  optimizerScales[5] = translationScale/1000000;
+  optimizerScales[3] = translationScale/1000;
+  optimizerScales[4] = translationScale/1000;
+  optimizerScales[5] = translationScale/1000;
   optimizer->SetScales( optimizerScales );
   this->optimizer->SetMaximumStepLength( 0.50  );//in mm?
   this->optimizer->SetMinimumStepLength( 0.005 ); //in mm?
 
-  this->metric->SetNumberOfSpatialSamples(500000);
+  this->metric->SetNumberOfSpatialSamples(50000);
 
   // Set a stopping criterion
   this->optimizer->SetNumberOfIterations( 100 );
@@ -190,7 +190,7 @@ void VolumeRegistration::RegisterVolumes()
   std::cout << " Iterations    = " << numberOfIterations << std::endl;
   std::cout << " Metric value  = " << bestValue          << std::endl;
 
-  std::cerr<< this->registration->GetTransform()[0]<< std::endl;
+  //std::cerr<< this->registration->GetTransform()[0]<< std::endl;
 
   return;
 
@@ -242,7 +242,6 @@ void VolumeRegistration::CreateRegisteredVolume()
   //this->registeredVolume.volumeData->SetOrigin(this->movingVolume->volumeData->GetOrigin());
   //this->registeredVolume.volumeData->SetSpacing(this->movingVolume->volumeData->GetSpacing());
   this->registeredVolume.SetParametersFromITK();
-  std::cout<<this->registeredVolume.volumeData->GetLargestPossibleRegion()<<std::endl;
 
   return;
 

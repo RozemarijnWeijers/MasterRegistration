@@ -22,7 +22,9 @@ class Volume
   ~Volume();
 
   void SetParametersFromITK( bool = false );// TransformMatrix );
+  void SetParametersFromIGT();
   void ConvertITKtoIGTVolume();
+  void ConvertIGTtoITKVolume();
   int LoadVolume( char* );
   void UpdateVolumeTransform( TransformMatrix );
   void CropVolume( float[3], int[3], Volume* );

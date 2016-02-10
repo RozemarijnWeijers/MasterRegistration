@@ -57,7 +57,7 @@ void Image::SetParametersFromITK( double origin3th, double spacing3th, Transform
 int Image::ConvertIGTtoITKImage()
 {
 
-  this->SetParametersFromIGT();
+  //this->SetParametersFromIGT();
 
   // Set image data to ITK image (3D information -> 2D)
   ImageType::RegionType     region;

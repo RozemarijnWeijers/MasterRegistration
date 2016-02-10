@@ -41,6 +41,67 @@ void Volume::SetParametersFromITK( bool RAS )
 
 }
 
+void Volume::SetParametersFromIGT()
+{
+
+  //is this right?
+  this->imgMsg->GetDimensions( this->sizeVolume );
+  //this->imgMsg->GetOrigin( this->originVolume );
+  this->imgMsg->GetSpacing( this->spacingVolume );
+
+  this->volumeMatrix.SetDimensionsForIGTMatrix( this->sizeVolume );
+  this->volumeMatrix.SetSpacingForIGTMatrix( this->spacingVolume );
+  this->volumeMatrix.SetTransformFromIGT( this->imgMsg );
+  this->originVolume[0] = this->volumeMatrix.matrix(0,3);
+  this->originVolume[1] = this->volumeMatrix.matrix(1,3);
+  this->originVolume[2] = this->volumeMatrix.matrix(2,3);
+
+
+  return;
+
+}
+
+void Volume::ConvertIGTtoITKVolume()
+{
+
+  //this->SetParametersFromIGT();
+
+  // Set image data to ITK image (3D information -> 2D)
+  VolumeType::RegionType     region;
+  VolumeType::IndexType      start;
+  VolumeType::SizeType       sizeregion;
+
+  start[0] = 0;/*this->originVolume[0]; */   start[1] = 0;/*this->originVolume[1];*/ start[2] = 0;/*this->originVolume[2];*/
+  sizeregion[0] = this->sizeVolume[0];  sizeregion[1] = this->sizeVolume[1];  sizeregion[2] = this->sizeVolume[2];
+  region.SetSize( sizeregion );
+  region.SetIndex( start );
+
+  this->volumeData->SetRegions( region );
+  this->volumeData->SetSpacing( this->spacingVolume );
+  float orig[3]; //LPS
+  orig[0]=-this->originVolume[0]; orig[1]=-this->originVolume[1]; orig[2]=this->originVolume[2];
+  this->volumeData->SetOrigin( orig );
+
+  VolumeType::DirectionType direction; //LPS
+  direction[0][0] = -this->volumeMatrix.matrix(0,0); direction[1][0] = -this->volumeMatrix.matrix(1,0); direction[2][0] = this->volumeMatrix.matrix(2,0);
+  direction[0][1] = -this->volumeMatrix.matrix(0,1); direction[1][1] = -this->volumeMatrix.matrix(1,1); direction[2][1] = this->volumeMatrix.matrix(2,1);
+  direction[0][2] = -this->volumeMatrix.matrix(0,2); direction[1][2] = -his->volumeMatrix.matrix(1,2); direction[2][2] = this->volumeMatrix.matrix(2,2);
+  this->volumeData->SetDirection( direction );
+
+  this->volumeData->Allocate();
+
+  // Copy image data into ITK image
+  memcpy( this->volumeData->GetBufferPointer(), this->imgMsg->GetScalarPointer(), this->imgMsg->GetSubVolumeImageSize() );
+  this->volumeData->Modified();
+  std::cout<< "this"<< std::endl;
+  std::cout<< this->volumeData->GetLargestPossibleRegion()<<std::endl;
+  std::cout<< this->volumeData->GetOrigin()<<std::endl;
+  std::cout<< this->volumeData->GetDirection()<<std::endl;
+
+  return;
+
+}
+
 void Volume::ConvertITKtoIGTVolume()
 {
 
@@ -97,8 +158,6 @@ int Volume::LoadVolume( char* filename )
   }
 
   this->SetParametersFromITK();
-
-  std::cerr << "Volume Loaded " << std::endl;
 
   return 1;
 
