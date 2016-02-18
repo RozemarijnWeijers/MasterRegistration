@@ -24,8 +24,8 @@ void ImageCropping::SetNumberofImages( int n )
 void ImageCropping::SetCropSizeAndStart( int dSize[2], float dStart[2] )
 {
 
-  this->desiredStart[0] = dStart[0];  this->desiredStart[1] = dStart[1];
-  this->desiredSize[0] = dSize[0];    this->desiredSize[1] = dSize[1];
+  this->desiredStart[0] = dStart[0];  this->desiredStart[1] = dStart[1]; // in mm
+  this->desiredSize[0] = dSize[0];    this->desiredSize[1] = dSize[1]; // in pixels
 
   return;
 
@@ -58,7 +58,7 @@ void ImageCropping::CropImage()
   // Set resliced image to ITK image
   this->croppedImage.imageData = this->filter->GetOutput();
 
-  // Get and set parameters for reslices image    // spacing (mm/pixel)
+  // Get and set parameters for reslices image
   ImageType::PointType          origin;
   float                         originSliceImage[3];
   double                        spacingSliceImage[3];
@@ -84,7 +84,7 @@ void ImageCropping::SetImageMatrix()
   float* spacing = this->inputImage->spacingImage;
   this->croppedImage.imageMatrix.matrix = this->inputImage->imageMatrix.matrix;
   int dim[3] = {this->desiredSize[0], this->desiredSize[1], 1 };
-  this->croppedImage.imageMatrix.SetDimensionsForIGTMatrix(  dim );
+  this->croppedImage.imageMatrix.SetDimensionsForIGTMatrix( dim );
   this->croppedImage.imageMatrix.SetSpacingForIGTMatrix( spacing );
   this->croppedImage.imageMatrix.SetIGTTransformFromMat();
 
@@ -109,19 +109,7 @@ void ImageCropping::Convert2DImageTo3DVolume()
   layout[0] = 1;
   layout[1] = 1;
   layout[2] = 0;
-
   filter2DTo3D->SetLayout( layout );
-
-  /*unsigned int inputImageNumber = 0;
-  ImageType::Pointer inputImageTile;
-
-  for (int i = 0; i < this->number ; i++)
-    {
-    inputImageTile = this->croppedImage.imageData;//[i];
-    //inputImageTile->DisconnectPipeline();
-    filter2DTo3D->SetInput( inputImageNumber, inputImageTile );
-    inputImageNumber++;
-    }*/
 
   ImageType::Pointer input = this->croppedImage.imageData;
   filter2DTo3D->SetInput( 0, input );
@@ -145,7 +133,6 @@ void ImageCropping::Convert2DImageTo3DVolume()
   filterChange->SetOutputOrigin( origin );
   filterChange->ChangeOriginOn();
   filterChange->Update();
-
 
   VolumeType::DirectionType direction;
   direction[0][0] = this->croppedImage.imageMatrix.matrix(0,0);direction[1][0] = this->croppedImage.imageMatrix.matrix(0,1);direction[2][0] = this->croppedImage.imageMatrix.matrix(0,2);

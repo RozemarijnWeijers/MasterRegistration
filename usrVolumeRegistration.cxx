@@ -56,7 +56,6 @@ void VolumeRegistration::SetInitialMatrix( TransformMatrix matrix1 )
 
 }
 
-
 class CommandIteration : public itk::Command
 {
 
@@ -99,14 +98,6 @@ void VolumeRegistration::RegisterVolumes()
   this->registration->SetFixedImageRegion( this->fixedVolume->volumeData->GetLargestPossibleRegion() );
 
   //  Initialize the transform
-  /*typedef itk::CenteredTransformInitializer< TransformType3D, VolumeType, VolumeType >  TransformInitializerType;
-  TransformInitializerType::Pointer initializer = TransformInitializerType::New();
-  initializer->SetTransform(   transform );
-  initializer->SetFixedImage(  this->fixedVolume->volumeData );
-  initializer->SetMovingImage( this->movingVolume->volumeData );
-  initializer->MomentsOn();
-  initializer->InitializeTransform();*/
-
   typedef TransformType3D::VersorType  VersorType;
   typedef VersorType::VectorType     VectorType;
   typedef TransformType3D::TranslationType TranslationType;
@@ -136,17 +127,16 @@ void VolumeRegistration::RegisterVolumes()
   optimizerScales[4] = translationScale/1000;
   optimizerScales[5] = translationScale/1000;
   optimizer->SetScales( optimizerScales );
-  this->optimizer->SetMaximumStepLength( 0.50  );//in mm?
-  this->optimizer->SetMinimumStepLength( 0.005 ); //in mm?
+  this->optimizer->SetMaximumStepLength( 0.50  );//in mm
+  this->optimizer->SetMinimumStepLength( 0.005 ); //in mm
 
   this->metric->SetNumberOfSpatialSamples(50000);
 
   // Set a stopping criterion
-  this->optimizer->SetNumberOfIterations( 100 );
+  this->optimizer->SetNumberOfIterations( 800 );
 
   CommandIteration::Pointer observer = CommandIteration::New();
   this->optimizer->AddObserver( itk::IterationEvent(), observer );
-
 
   try
   {
@@ -165,7 +155,6 @@ void VolumeRegistration::RegisterVolumes()
   }
 
   // Create registered version of moving Volume
-
   this->CreateRegisteredVolume();
 
   //  The result of the registration process is an array of parameters that defines the spatial transformation in an unique way. This final result is obtained using the \code{GetLastTransformParameters()} method.
@@ -189,8 +178,6 @@ void VolumeRegistration::RegisterVolumes()
   std::cout << " Translation Z = " << finalTranslationZ  << std::endl;
   std::cout << " Iterations    = " << numberOfIterations << std::endl;
   std::cout << " Metric value  = " << bestValue          << std::endl;
-
-  //std::cerr<< this->registration->GetTransform()[0]<< std::endl;
 
   return;
 
@@ -246,10 +233,4 @@ void VolumeRegistration::CreateRegisteredVolume()
   return;
 
 }
-
-/*transform->SetParameters( finalParameters );
-  TransformType::MatrixType matrix = transform->GetMatrix();
-  TransformType::OffsetType offset = transform->GetOffset();
-  std::cout << "Matrix = " << std::endl << matrix << std::endl;
-  std::cout << "Offset = " << std::endl << offset << std::endl;*/
 

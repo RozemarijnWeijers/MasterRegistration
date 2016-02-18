@@ -35,7 +35,7 @@ class ImageCropping
   ImageType::SizeType          desiredSize ;
   Image*                       inputImage;
   FilterImageType::Pointer     filter;
-  int                          number;// = 1;
+  int                          number;
 
   void SetImageMatrix();
 

@@ -156,9 +156,6 @@ void ImageRegistration::RegisterImages()
 
   std::cout << "Final parameters 2D/2D-Registration: " << finalParameters << std::endl;
 
-  //  The value of the image metric corresponding to the last set of parameters can be obtained with the \code{GetValue()} method of the optimizer.
-  //std::cout << "Metric value: " << this->optimizer->GetValue() << std::endl;
-
   return;
 
 }

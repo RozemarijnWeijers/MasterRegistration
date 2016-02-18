@@ -28,7 +28,6 @@ void TransformMatrix::SetTransformFromDouble( double transformMatrix[16] )
 
 }
 
-
 mat MultiplyMatrixAWithB( mat matrixA, mat matrixB )
 {
 
@@ -90,7 +89,7 @@ void TransformMatrix::SetIGTTransformFromMat()
       double originIGT[3];
       for ( int i=0; i<3; i++)
       {
-        originIGT[i] = (this->dimensions[i]-1)*this->spacing[i]/2;//matrix(i,3)+((this->dimensions[i]-1)*this->spacing[i]/2);
+        originIGT[i] = (this->dimensions[i]-1)*this->spacing[i]/2;
       }
       tempMat1(0,3) = originIGT[0];
       tempMat1(1,3) = originIGT[1];

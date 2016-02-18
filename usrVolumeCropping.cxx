@@ -15,8 +15,8 @@ VolumeCropping::~VolumeCropping()
 void VolumeCropping::SetCropSizeAndStart( int dSize[3], int dStart[3] )
 {
 
-  this->desiredStart[0] = dStart[0];  this->desiredStart[1] = dStart[1];    this->desiredStart[2] = dStart[2];
-  this->desiredSize[0] = dSize[0];    this->desiredSize[1] = dSize[1];      this->desiredSize[2] = dSize[1];
+  this->desiredStart[0] = dStart[0];  this->desiredStart[1] = dStart[1];    this->desiredStart[2] = dStart[2]; // in pixels
+  this->desiredSize[0] = dSize[0];    this->desiredSize[1] = dSize[1];      this->desiredSize[2] = dSize[1]; // in pixels
 
   return;
 

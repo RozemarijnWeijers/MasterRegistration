@@ -23,7 +23,7 @@ class Image
 
   ImageType::Pointer            imageData;
   igtl::ImageMessage::Pointer   imgMsg;
-  TransformMatrix               imageMatrix;   // image origin and orientation matrix
+  TransformMatrix               imageMatrix;
 
   float             originImage[3];
   float             spacingImage[3];

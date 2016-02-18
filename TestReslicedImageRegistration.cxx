@@ -55,12 +55,13 @@ int main(int argc, char* argv[]) // Why is this one slow? and why does it stop t
   resliceVolume.SetVolume( &volume );
   Volume CroppedVolumeSlice;
 
+  //create a reslice
   double angles[3] = { 0, 0, 0};
   if (angles[0] == 0 && angles[1] == 0 && angles[2] == 0)
   {
       float slicenumber1 = 0;
       float slicenumber2 = 0;
-      float slicenumber3 = volume.sizeVolume[2]/2;//atoi(argv[4]);
+      float slicenumber3 = volume.sizeVolume[2]/2;//atoi(argv[4]); //your choise
 
       float resliceOrigin[3];
       resliceOrigin[0] = slicenumber1;
@@ -108,46 +109,6 @@ int main(int argc, char* argv[]) // Why is this one slow? and why does it stop t
       client1.imgMsg->SetDeviceName( "CroppedImage" );
       client1.SendImage();
   }
-  /*if (sliceangle3 == 90 )
-  {
-      int s[3] = {(volume.sizeVolume[0]-50), 1, (volume.sizeVolume[2]-25)};
-      volumeCropSize[0] = s[0]; volumeCropSize[1] = s[1]; volumeCropSize[2] = s[2];
-      volumeCropOrigin[0] = volume.originVolume[0] + 20; volumeCropOrigin[1] = atoi(argv[7]); volumeCropOrigin[2] =volume.originVolume[0] + 10;
-      //int volumeCropSize[3] = { 160, 40, 65};//cropReslice.croppedVolume.sizeVolume[0]+marge, cropReslice.croppedVolume.sizeVolume[2]+marge, cropReslice.croppedVolume.sizeVolume[1]+marge};
-      //float volumeCropOrigin[3] = {20, 50,5};// (resliceOrigin[0]+dstart[0])/volume.spacingVolume[0]-(marge/2), (resliceOrigin[2])/volume.spacingVolume[2]-(marge/2), (resliceOrigin[1]+dstart[1])/volume.spacingVolume[1]-(marge/2)};
-
-      volume.CropVolume( volumeCropOrigin, volumeCropSize, &CroppedVolumeSlice );
-
-      CroppedVolumeSlice.ConvertITKtoIGTVolume();
-      client1.imgMsg = CroppedVolumeSlice.imgMsg;
-      client1.imgMsg->SetDeviceName( "CroppedImage" );
-      client1.SendImage();
-  }
-  if (sliceangle2 == -90 )
-  {
-      int s[3] = { 1,volume.sizeVolume[1]-50, volume.sizeVolume[2]-50 };
-      volumeCropSize[0] = s[0]; volumeCropSize[1] = s[1]; volumeCropSize[2] = s[2];
-      volumeCropOrigin[0] = atoi(argv[7]); volumeCropOrigin[1] = volume.originVolume[1] + 20; volumeCropOrigin[2] =volume.originVolume[0] + 20;
-
-      //int volumeCropSize[3] = { 160, 40, 65};//cropReslice.croppedVolume.sizeVolume[0]+marge, cropReslice.croppedVolume.sizeVolume[2]+marge, cropReslice.croppedVolume.sizeVolume[1]+marge};
-      //float volumeCropOrigin[3] = {20, 50,5};// (resliceOrigin[0]+dstart[0])/volume.spacingVolume[0]-(marge/2), (resliceOrigin[2])/volume.spacingVolume[2]-(marge/2), (resliceOrigin[1]+dstart[1])/volume.spacingVolume[1]-(marge/2)};
-
-      volume.CropVolume( volumeCropOrigin, volumeCropSize, &CroppedVolumeSlice );
-
-      CroppedVolumeSlice.ConvertITKtoIGTVolume();
-      client1.imgMsg = CroppedVolumeSlice.imgMsg;
-      client1.imgMsg->SetDeviceName( "CroppedImage" );
-      client1.SendImage();
-  }*/
-
-
-  /*typedef itk::TranslationTransform<double,3> TranslationTransformType;
-  TranslationTransformType::Pointer translationtransform = TranslationTransformType::New();
-  TranslationTransformType::OutputVectorType tTranslation;
-  tTranslation[0] = atoi(argv[4]); // in mm?
-  tTranslation[1] = atoi(argv[5]); // in mm?
-  tTranslation[2] = atoi(argv[6]); // in mm?
-  translationtransform->Translate(tTranslation);*/
 
   TransformType3D::Pointer movetransform = TransformType3D::New();
   typedef TransformType3D::VersorType VersorType;
@@ -269,94 +230,4 @@ int main(int argc, char* argv[]) // Why is this one slow? and why does it stop t
   client1.imgMsg->SetDeviceName( "VolumeRegistered" );
   client1.SendImage();
 
-  /*double initialMatrix[9];
-
-  while ( 1 )
-  {
-    for ( int i = 0; i < 100; i ++ ) //WHY 100?
-    {
-      if ( clientIGT1.ReceiveImage() == 0 )
-      {
-        // Make sure to have two different images
-        if ( fixedImage.imgMsg == movingImage.imgMsg )
-        {
-          std::cerr<<"Fixed and moving are the same"<<std::endl;
-        }
-        else
-        {
-        // Register fixed and moving image (2D/2D Registration of two subsequential images), two sequential received images for now, but this wil later be the received image with the reslice of the volume at that position
-        initialMatrix[0] = 1; initialMatrix[1] = 0; initialMatrix[2] = 0;
-        initialMatrix[3] = 0; initialMatrix[4] = 1; initialMatrix[5] = 0;
-        initialMatrix[6] = 0; initialMatrix[7] = 0; initialMatrix[8] = 1;
-
-
-        //registration.SetInitialMatrix( initialMatrix );
-        registration.RegisterImages();
-        //registrationRegistrationFunction( &fixedImage, &movingImage, &registeredImage );
-
-        // Create imageMessage for registered image
-        //registeredImage = registration.registeredImage;
-        //registeredImage.SetParametersFromITK();
-        //registeredImage.ITKtoIGTImage();
-        //registeredImage.SetParametersFromITK();*/
-
-        // Calculate subtraction of registered and fixed image
-        /*typedef itk::SubtractImageFilter <ImageType, ImageType > SubtractImageFilterType;
-        SubtractImageFilterType::Pointer subtractFilter = SubtractImageFilterType::New ();
-        subtractFilter->SetInput1(fixedImage.imageData);
-        subtractFilter->SetInput2(registeredImage.imageData);
-        subtractFilter->Update();
-
-        typedef itk::SubtractImageFilter <ImageType, ImageType > SubtractImageFilterType2;
-        SubtractImageFilterType2::Pointer subtractFilter2 = SubtractImageFilterType2::New ();
-        subtractFilter2->SetInput1(fixedImage.imageData);
-        subtractFilter2->SetInput2(movingImage.imageData);
-        subtractFilter2->Update();
-
-        Images subtract1;
-        subtract1.imageData = subtractFilter->GetOutput();
-        subtract1.ITKtoIGTImage(temspacing);
-        subtract1.imgMsg->SetDeviceName("FixedMinusRegistered");
-        subtract1.imgMsg->Pack();
-
-        Images subtract2;
-        subtract2.imageData = subtractFilter2->GetOutput();
-        subtract2.ITKtoIGTImage(temspacing);
-        subtract2.imgMsg->SetDeviceName("FixedMinusMoving");
-        subtract2.imgMsg->Pack();*/
-
-        // Set massages names
-        /*clientIGT3.imgMsg = fixedImage.imgMsg;
-        clientIGT3.imgMsg->SetDeviceName( "fixedImage" );
-        clientIGT3.SendImage();
-        //fixedImage.imgMsg->Pack();
-        clientIGT3.imgMsg = movingImage.imgMsg;
-        clientIGT3.imgMsg->SetDeviceName( "movingImage" );
-        clientIGT3.SendImage();
-        //movingImage.imgMsg->Pack();
-        //registeredImage.imgMsg->SetDeviceName( "registeredImage" );
-        //clientIGT3.SendImage( registeredImage.imgMsg );
-        //registeredImage.imgMsg->Pack();
-
-        // Send image messages to sliceImager for visualization
-        //clientIGT3.socket->Send( fixedImage.imgMsg->GetPackPointer(), fixedImage.imgMsg->GetPackSize() );
-        //clientIGT3.socket->Send( movingImage.imgMsg->GetPackPointer(), movingImage.imgMsg->GetPackSize() );
-        //clientIGT3.socket->Send( registeredImage.imgMsg->GetPackPointer(), registeredImage.imgMsg->GetPackSize() );
-        //clientIGT3.socket->Send(subtract1.imgMsg->GetPackPointer(), subtract1.imgMsg->GetPackSize());
-        //clientIGT3.socket->Send(subtract2.imgMsg->GetPackPointer(), subtract2.imgMsg->GetPackSize());
-
-        // Set moving image to fixed image so it can be registered to the next image received
-        //Images  temp = movingImage;
-        fixedImage = movingImage;
-        //fixedImage = temp;
-        }
-       }
-    }
-    std::cerr<< "Stopped receiving messages" <<std::endl;
-  }
-
-  // Close connection (The example code never reaches this section ...)
-  clientIGT1.socket->CloseSocket();
-  clientIGT2.socket->CloseSocket();
-  clientIGT3.socket->CloseSocket();*/
 }
